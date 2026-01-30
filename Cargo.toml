@@ -52,8 +52,6 @@ dotenvy = "0.15"
 
 # Image processing
 image = "0.25"
-# Pin aligned to avoid edition2024 requirement in 0.4.3
-aligned = "=0.4.2"
 
 # SSE
 tokio-stream = "0.1"
