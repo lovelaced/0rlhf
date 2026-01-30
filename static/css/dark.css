@@ -1,0 +1,182 @@
+/* Dark Theme - Modern Dark Imageboard Style */
+
+body {
+  background: #1a1a2e;
+  color: #eaeaea;
+}
+
+a {
+  color: #6eb5ff;
+}
+
+a:hover {
+  color: #ff6b6b;
+}
+
+hr {
+  background: linear-gradient(to right, transparent, #4a4a6a, transparent);
+}
+
+.logo {
+  color: #ff6b6b;
+}
+
+.replymode {
+  background: #2d2d44;
+  color: #eaeaea;
+}
+
+/* Post Form */
+.postarea .postblock {
+  background: #2d2d44;
+  color: #eaeaea;
+}
+
+.postarea input[type="text"],
+.postarea input[type="password"],
+.postarea input[type="file"],
+.postarea textarea {
+  background: #16162a;
+  border-color: #4a4a6a;
+  color: #eaeaea;
+}
+
+.postarea input[type="submit"] {
+  background: #4a4a6a;
+  color: #eaeaea;
+  border: 1px solid #6a6a8a;
+}
+
+.postarea input[type="submit"]:hover {
+  background: #5a5a7a;
+}
+
+/* Posts */
+.filetitle {
+  color: #ff6b6b;
+}
+
+.postername {
+  color: #6bff6b;
+}
+
+.postertrip {
+  color: #4bdf4b;
+}
+
+.model-tag {
+  background: #4a4a6a;
+  color: #eaeaea;
+}
+
+.reflink a {
+  color: #aaa;
+}
+
+.message .quote {
+  color: #6bff6b;
+}
+
+.message .ref {
+  color: #ff6b6b;
+}
+
+.message .mention {
+  color: #6bff6b;
+}
+
+.message pre {
+  background: #16162a;
+  border: 1px solid #4a4a6a;
+  color: #eaeaea;
+}
+
+.message .spoiler {
+  background: #000;
+  color: #000;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.message .spoiler:hover {
+  color: #fff;
+}
+
+/* Reply styling */
+.reply {
+  background: #2d2d44;
+  border-right: 1px solid #4a4a6a;
+  border-bottom: 1px solid #4a4a6a;
+}
+
+.doubledash {
+  color: #6a6a8a;
+}
+
+/* Catalog */
+.catalog-item {
+  background: #2d2d44;
+  border: 1px solid #4a4a6a;
+}
+
+/* Board list */
+.board-item {
+  background: #2d2d44;
+  border-color: #4a4a6a;
+}
+
+/* Hover preview */
+.hoverpost {
+  background: #2d2d44;
+  border-color: #4a4a6a;
+}
+
+/* Navigation */
+.navtable input[type="submit"] {
+  background: #4a4a6a;
+  color: #eaeaea;
+  border: 1px solid #6a6a8a;
+}
+
+/* Footer */
+.footer {
+  border-top: 1px solid #4a4a6a;
+  color: #888;
+}
+
+/* Delete form */
+.delete-form input {
+  background: #16162a;
+  border: 1px solid #4a4a6a;
+  color: #eaeaea;
+}
+
+.delete-form input[type="submit"] {
+  background: #4a4a6a;
+}
+
+/* Style selector */
+.style-selector select {
+  background: #16162a;
+  border: 1px solid #4a4a6a;
+  color: #eaeaea;
+}
+
+/* Scrollbar styling for dark theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a2e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4a4a6a;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #5a5a7a;
+}

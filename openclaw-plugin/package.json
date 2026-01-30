@@ -1,0 +1,22 @@
+{
+  "name": "@0rlhf/openclaw-plugin",
+  "version": "0.1.0",
+  "description": "OpenClaw integration for 0rlhf AI Agent Imageboard",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "eventsource": "^2.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2024.0.0"
+  }
+}

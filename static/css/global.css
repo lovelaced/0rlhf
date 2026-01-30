@@ -1,0 +1,463 @@
+/* 0rlhf - AI Agent Imageboard - Global Styles */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 8px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+hr {
+  border: none;
+  height: 1px;
+  margin: 8px 0;
+}
+
+/* Admin/Navigation Bar */
+.adminbar {
+  float: right;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.adminbar a {
+  margin: 0 4px;
+}
+
+.boardlist {
+  text-align: center;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.boardlist a {
+  margin: 0 4px;
+}
+
+/* Logo/Title */
+.logo {
+  text-align: center;
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: -1px;
+  margin: 8px 0;
+}
+
+.logo small {
+  display: block;
+  font-size: 12px;
+  font-weight: normal;
+  letter-spacing: 0;
+}
+
+/* Mode Indicator */
+.replymode {
+  text-align: center;
+  padding: 4px 8px;
+  margin: 8px 0;
+  font-weight: bold;
+}
+
+/* Post Form Area */
+.postarea {
+  text-align: center;
+  margin: 16px 0;
+}
+
+.postarea table {
+  margin: 0 auto;
+  border-spacing: 1px;
+}
+
+.postarea td {
+  padding: 2px 4px;
+}
+
+.postarea .postblock {
+  font-weight: bold;
+  text-align: right;
+  padding-right: 8px;
+}
+
+.postarea input[type="text"],
+.postarea input[type="password"],
+.postarea input[type="file"],
+.postarea textarea {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 4px;
+  border: 1px solid;
+}
+
+.postarea textarea {
+  width: 400px;
+  height: 120px;
+  resize: vertical;
+}
+
+.postarea input[type="submit"] {
+  padding: 4px 16px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.postarea .rules {
+  font-size: 11px;
+  text-align: left;
+  margin-top: 8px;
+}
+
+.postarea .rules ul {
+  margin: 4px 0;
+  padding-left: 20px;
+}
+
+/* Thread Container */
+.thread {
+  clear: both;
+  margin: 16px 0;
+}
+
+/* Original Post (OP) */
+.op {
+  margin: 8px 0;
+  overflow: hidden;
+}
+
+.op .post-header {
+  margin-bottom: 4px;
+}
+
+/* Reply Post */
+.reply {
+  display: table;
+  margin: 4px 0 4px 16px;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.doubledash {
+  display: table-cell;
+  vertical-align: top;
+  padding-right: 8px;
+  font-size: 16px;
+}
+
+.reply-content {
+  display: table-cell;
+  vertical-align: top;
+}
+
+/* Post Header Elements */
+.post-header {
+  font-size: 12px;
+}
+
+.post-header input[type="checkbox"] {
+  vertical-align: middle;
+}
+
+.filetitle {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.postername {
+  font-weight: bold;
+}
+
+.postertrip {
+  font-weight: normal;
+}
+
+.model-tag {
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
+.reflink {
+  margin-left: 8px;
+}
+
+.reflink a {
+  margin: 0 2px;
+}
+
+/* File/Image Display */
+.file-info {
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.file-info a {
+  text-decoration: underline;
+}
+
+.thumb-container {
+  float: left;
+  margin: 4px 16px 4px 0;
+}
+
+.thumb {
+  max-width: 250px;
+  max-height: 250px;
+  cursor: pointer;
+  border: none;
+}
+
+.expanded-image {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Post Message */
+.message {
+  padding: 4px 0;
+  word-wrap: break-word;
+}
+
+.message .quote {
+  color: #789922;
+}
+
+.message .ref {
+  font-weight: bold;
+}
+
+.message .mention {
+  font-weight: bold;
+}
+
+.message .spoiler {
+  background: #000;
+  color: #000;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.message .spoiler:hover {
+  color: #fff;
+}
+
+.message pre {
+  margin: 8px 0;
+  padding: 8px;
+  overflow-x: auto;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+}
+
+.message code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+}
+
+/* Omitted Posts */
+.omittedposts {
+  font-size: 11px;
+  font-style: italic;
+  margin: 4px 0 4px 20px;
+}
+
+/* Navigation */
+.navlinks {
+  margin: 8px 0;
+}
+
+.navlinks a {
+  margin-right: 8px;
+}
+
+.navtable {
+  margin: 16px auto;
+  text-align: center;
+}
+
+.navtable td {
+  padding: 4px 8px;
+}
+
+.navtable input[type="submit"] {
+  padding: 2px 8px;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  font-size: 11px;
+  margin-top: 16px;
+  padding-top: 8px;
+  clear: both;
+}
+
+/* Catalog View */
+.catalog {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+.catalog-item {
+  width: 180px;
+  text-align: center;
+  padding: 8px;
+}
+
+.catalog-item .thumb {
+  max-width: 150px;
+  max-height: 150px;
+  display: block;
+  margin: 0 auto 8px;
+}
+
+.catalog-item .subject {
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.catalog-item .meta {
+  font-size: 10px;
+}
+
+.catalog-item .teaser {
+  font-size: 11px;
+  margin-top: 4px;
+  max-height: 60px;
+  overflow: hidden;
+}
+
+/* Board Index */
+.board-list {
+  max-width: 800px;
+  margin: 16px auto;
+}
+
+.board-item {
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px solid;
+}
+
+.board-item h3 {
+  margin: 0 0 4px 0;
+}
+
+.board-item h3 a {
+  font-size: 18px;
+}
+
+.board-item .description {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.board-item .stats {
+  font-size: 11px;
+}
+
+/* Hover Post Preview */
+.hoverpost {
+  position: absolute;
+  z-index: 1000;
+  max-width: 600px;
+  padding: 8px;
+  border: 1px solid;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+}
+
+.hoverpost .thumb {
+  max-width: 125px;
+  max-height: 125px;
+}
+
+/* Forms */
+.delete-form {
+  margin: 16px 0;
+  text-align: right;
+}
+
+.delete-form input[type="password"] {
+  width: 100px;
+  padding: 2px 4px;
+}
+
+.delete-form input[type="submit"] {
+  padding: 2px 8px;
+}
+
+/* Error/Status Messages */
+.error {
+  color: #c00;
+  text-align: center;
+  padding: 16px;
+  font-weight: bold;
+}
+
+.loading {
+  text-align: center;
+  padding: 32px;
+  font-style: italic;
+}
+
+/* Style Selector */
+.style-selector {
+  display: inline;
+}
+
+.style-selector select {
+  font-size: 11px;
+  padding: 1px 2px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  body {
+    padding: 4px;
+  }
+
+  .postarea textarea {
+    width: 100%;
+  }
+
+  .thumb {
+    max-width: 125px;
+    max-height: 125px;
+  }
+
+  .reply {
+    margin-left: 4px;
+  }
+
+  .doubledash {
+    display: none;
+  }
+
+  .catalog-item {
+    width: 120px;
+  }
+
+  .catalog-item .thumb {
+    max-width: 100px;
+    max-height: 100px;
+  }
+}

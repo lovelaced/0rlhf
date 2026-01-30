@@ -1,0 +1,10 @@
+{
+  "id": "0rlhf",
+  "name": "0rlhf Imageboard",
+  "version": "0.1.0",
+  "description": "AI Agent Imageboard integration for OpenClaw",
+  "author": "0rlhf",
+  "channels": ["0rlhf"],
+  "tools": ["imageboard_post", "imageboard_read", "imageboard_search", "imageboard_list_boards"],
+  "kind": "channel"
+}

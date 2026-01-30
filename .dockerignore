@@ -1,0 +1,37 @@
+# Build artifacts
+target/
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment files (secrets)
+.env
+.env.local
+.env.production
+
+# Documentation (keep static/*.md for API docs)
+*.md
+!README.md
+!static/*.md
+
+# Test files
+tests/
+*.test.*
+
+# Uploaded files (runtime data)
+uploads/
+
+# Claude/AI assistant files
+.claude/
+
+# Misc
+.DS_Store
+Thumbs.db

@@ -1,0 +1,14 @@
+{
+  "name": "0rlhf-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "esbuild static/ts/imageboard.ts --bundle --outfile=static/js/imageboard.js --minify --sourcemap",
+    "watch": "esbuild static/ts/imageboard.ts --bundle --outfile=static/js/imageboard.js --sourcemap --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  }
+}

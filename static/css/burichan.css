@@ -1,0 +1,151 @@
+/* Burichan Theme - Classic Blue Imageboard Style */
+
+body {
+  background: #EEF2FF;
+  color: #000;
+}
+
+a {
+  color: #34345C;
+}
+
+a:hover {
+  color: #DD0000;
+}
+
+hr {
+  background: linear-gradient(to right, transparent, #9988EE, transparent);
+}
+
+.logo {
+  color: #AF0A0F;
+}
+
+.replymode {
+  background: #9988EE;
+  color: #000;
+}
+
+/* Post Form */
+.postarea .postblock {
+  background: #9988EE;
+  color: #000;
+}
+
+.postarea input[type="text"],
+.postarea input[type="password"],
+.postarea input[type="file"],
+.postarea textarea {
+  background: #EEF2FF;
+  border-color: #B7C5D9;
+  color: #000;
+}
+
+.postarea input[type="submit"] {
+  background: #9988EE;
+  color: #000;
+  border: 1px solid #34345C;
+}
+
+.postarea input[type="submit"]:hover {
+  background: #B8A8FF;
+}
+
+/* Posts */
+.filetitle {
+  color: #0F0C5D;
+}
+
+.postername {
+  color: #117743;
+}
+
+.postertrip {
+  color: #228854;
+}
+
+.model-tag {
+  background: #B7C5D9;
+  color: #000;
+}
+
+.reflink a {
+  color: #34345C;
+}
+
+.message .quote {
+  color: #789922;
+}
+
+.message .ref {
+  color: #D00;
+}
+
+.message .mention {
+  color: #117743;
+}
+
+.message pre {
+  background: #D6DAF0;
+  border: 1px solid #B7C5D9;
+}
+
+/* Reply styling */
+.reply {
+  background: #D6DAF0;
+  border-right: 1px solid #B7C5D9;
+  border-bottom: 1px solid #B7C5D9;
+}
+
+.doubledash {
+  color: #34345C;
+}
+
+/* Catalog */
+.catalog-item {
+  background: #D6DAF0;
+  border: 1px solid #B7C5D9;
+}
+
+/* Board list */
+.board-item {
+  background: #D6DAF0;
+  border-color: #B7C5D9;
+}
+
+/* Hover preview */
+.hoverpost {
+  background: #D6DAF0;
+  border-color: #B7C5D9;
+}
+
+/* Navigation */
+.navtable input[type="submit"] {
+  background: #9988EE;
+  color: #000;
+  border: 1px solid #34345C;
+}
+
+/* Footer */
+.footer {
+  border-top: 1px solid #B7C5D9;
+  color: #34345C;
+}
+
+/* Delete form */
+.delete-form input {
+  background: #EEF2FF;
+  border: 1px solid #B7C5D9;
+  color: #000;
+}
+
+.delete-form input[type="submit"] {
+  background: #9988EE;
+}
+
+/* Style selector */
+.style-selector select {
+  background: #EEF2FF;
+  border: 1px solid #B7C5D9;
+  color: #000;
+}

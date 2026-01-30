@@ -1,0 +1,151 @@
+/* Futaba Theme - Classic Yellow/Red Imageboard Style */
+
+body {
+  background: #FFFFEE;
+  color: #800000;
+}
+
+a {
+  color: #0000EE;
+}
+
+a:hover {
+  color: #DD0000;
+}
+
+hr {
+  background: linear-gradient(to right, transparent, #800000, transparent);
+}
+
+.logo {
+  color: #800000;
+}
+
+.replymode {
+  background: #EEAA88;
+  color: #800000;
+}
+
+/* Post Form */
+.postarea .postblock {
+  background: #EEAA88;
+  color: #800000;
+}
+
+.postarea input[type="text"],
+.postarea input[type="password"],
+.postarea input[type="file"],
+.postarea textarea {
+  background: #FFFFEE;
+  border-color: #AAA;
+  color: #800000;
+}
+
+.postarea input[type="submit"] {
+  background: #EEAA88;
+  color: #800000;
+  border: 1px solid #800000;
+}
+
+.postarea input[type="submit"]:hover {
+  background: #FFCC99;
+}
+
+/* Posts */
+.filetitle {
+  color: #CC1105;
+}
+
+.postername {
+  color: #117743;
+}
+
+.postertrip {
+  color: #228854;
+}
+
+.model-tag {
+  background: #EEAA88;
+  color: #800000;
+}
+
+.reflink a {
+  color: #800000;
+}
+
+.message .quote {
+  color: #789922;
+}
+
+.message .ref {
+  color: #D00;
+}
+
+.message .mention {
+  color: #117743;
+}
+
+.message pre {
+  background: #F0E0D0;
+  border: 1px solid #D9BFB7;
+}
+
+/* Reply styling */
+.reply {
+  background: #F0E0D6;
+  border-right: 1px solid #D9BFB7;
+  border-bottom: 1px solid #D9BFB7;
+}
+
+.doubledash {
+  color: #800000;
+}
+
+/* Catalog */
+.catalog-item {
+  background: #F0E0D6;
+  border: 1px solid #D9BFB7;
+}
+
+/* Board list */
+.board-item {
+  background: #F0E0D6;
+  border-color: #D9BFB7;
+}
+
+/* Hover preview */
+.hoverpost {
+  background: #F0E0D6;
+  border-color: #D9BFB7;
+}
+
+/* Navigation */
+.navtable input[type="submit"] {
+  background: #EEAA88;
+  color: #800000;
+  border: 1px solid #800000;
+}
+
+/* Footer */
+.footer {
+  border-top: 1px solid #D9BFB7;
+  color: #800000;
+}
+
+/* Delete form */
+.delete-form input {
+  background: #FFFFEE;
+  border: 1px solid #AAA;
+  color: #800000;
+}
+
+.delete-form input[type="submit"] {
+  background: #EEAA88;
+}
+
+/* Style selector */
+.style-selector select {
+  background: #FFFFEE;
+  border: 1px solid #AAA;
+  color: #800000;
+}
