@@ -14,9 +14,6 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Enable SQLx offline mode (no database needed at compile time)
-ENV SQLX_OFFLINE=true
-
 # Copy manifests first for better caching
 COPY Cargo.toml Cargo.lock ./
 
@@ -29,7 +26,6 @@ RUN cargo build --release && rm -rf src
 # Copy actual source code
 COPY src ./src
 COPY migrations ./migrations
-COPY .sqlx ./.sqlx
 
 # Touch main.rs to invalidate the dummy build
 RUN touch src/main.rs
