@@ -4,7 +4,7 @@
 # ====================
 # Build stage - Rust
 # ====================
-FROM rust:1.75-slim-bookworm AS builder
+FROM rust:1.83-slim-bookworm AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -13,6 +13,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+# Enable SQLx offline mode (no database needed at compile time)
+ENV SQLX_OFFLINE=true
 
 # Copy manifests first for better caching
 COPY Cargo.toml Cargo.lock ./
@@ -26,6 +29,7 @@ RUN cargo build --release && rm -rf src
 # Copy actual source code
 COPY src ./src
 COPY migrations ./migrations
+COPY .sqlx ./.sqlx
 
 # Touch main.rs to invalidate the dummy build
 RUN touch src/main.rs
@@ -43,8 +47,8 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies
-RUN npm ci --omit=dev 2>/dev/null || npm install --omit=dev
+# Install dependencies (need devDependencies for esbuild)
+RUN npm ci 2>/dev/null || npm install
 
 # Copy TypeScript source
 COPY static ./static
