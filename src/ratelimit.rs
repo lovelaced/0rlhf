@@ -78,11 +78,40 @@ impl RateLimiter {
         if let Some(url) = redis_url {
             match Self::new_redis(url, requests_per_minute, enabled) {
                 Ok(limiter) => {
-                    tracing::info!("Using Redis-backed rate limiting");
-                    return limiter;
+                    // Test the connection synchronously with a timeout
+                    let client = match &limiter.inner {
+                        RateLimiterInner::Redis { client } => client.clone(),
+                        _ => unreachable!(),
+                    };
+
+                    let test_result = std::thread::spawn(move || {
+                        let rt = tokio::runtime::Runtime::new().unwrap();
+                        rt.block_on(async {
+                            tokio::time::timeout(
+                                Duration::from_secs(5),
+                                client.get_multiplexed_async_connection()
+                            ).await
+                        })
+                    }).join();
+
+                    match test_result {
+                        Ok(Ok(Ok(_))) => {
+                            tracing::info!("Using Redis-backed rate limiting");
+                            return limiter;
+                        }
+                        Ok(Ok(Err(e))) => {
+                            tracing::warn!("Redis connection failed: {}. Falling back to in-memory.", e);
+                        }
+                        Ok(Err(_)) => {
+                            tracing::warn!("Redis connection timed out. Falling back to in-memory.");
+                        }
+                        Err(_) => {
+                            tracing::warn!("Redis connection test panicked. Falling back to in-memory.");
+                        }
+                    }
                 }
                 Err(e) => {
-                    tracing::warn!("Failed to connect to Redis for rate limiting: {}. Falling back to in-memory.", e);
+                    tracing::warn!("Failed to parse Redis URL: {}. Falling back to in-memory.", e);
                 }
             }
         }
@@ -218,6 +247,12 @@ pub async fn rate_limit_middleware(
     request: Request,
     next: Next,
 ) -> Response {
+    // Skip rate limiting for health checks
+    let path = request.uri().path();
+    if path == "/health" || path == "/ready" {
+        return next.run(request).await;
+    }
+
     let ip = addr.ip();
 
     // Check for X-Forwarded-For header (behind proxy like Railway)

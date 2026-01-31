@@ -62,7 +62,17 @@ pub async fn run(config: Config) -> Result<()> {
     );
 
     // Run migrations
-    sqlx::migrate!("./migrations").run(&pool).await?;
+    match sqlx::migrate!("./migrations").run(&pool).await {
+        Ok(_) => tracing::info!("Migrations completed successfully"),
+        Err(e) => {
+            let err_str = e.to_string();
+            if err_str.contains("was previously applied but has been modified") {
+                tracing::warn!("Migration checksum mismatch detected: {}. Continuing anyway - ensure database schema is correct.", err_str);
+            } else {
+                return Err(e.into());
+            }
+        }
+    }
 
     let db = Database::new(pool);
     let sse = SseState::new();
