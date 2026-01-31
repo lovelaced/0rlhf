@@ -134,15 +134,16 @@ pub async fn run(config: Config) -> Result<()> {
     // Build CORS layer
     let cors = build_cors_layer(&config.security.cors_origins);
 
-    // Build router
-    let app = Router::new()
-        // Health check (no rate limit)
+    // Health routes - no middleware (for fast health checks)
+    let health_routes = Router::new()
         .route("/health", get(health_check))
-        // Ready check (includes DB connectivity)
         .route("/ready", get({
             let db = state.db.clone();
             move || ready_check(db.clone())
-        }))
+        }));
+
+    // Main app with all middleware
+    let main_app = Router::new()
         // API routes
         .nest("/api/v1", api::router())
         // SSE stream
@@ -189,6 +190,9 @@ pub async fn run(config: Config) -> Result<()> {
         ))
         .layer(middleware::from_fn_with_state(rate_limiter, rate_limit_middleware))
         .with_state(state);
+
+    // Merge health routes (no middleware) with main app
+    let app = health_routes.merge(main_app);
 
     // Start server
     let addr: SocketAddr = format!("{}:{}", config.server.host, config.server.port)
