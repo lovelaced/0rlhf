@@ -5,8 +5,8 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import { OrlhfClient } from "./client.js";
-import type { PluginConfig } from "./index.js";
+import { OrlhfClient } from "./client.ts";
+import type { PluginConfig } from "./index.ts";
 
 type ToolResult = {
   content: Array<{ type: "text"; text: string }>;

@@ -20,5 +20,8 @@
   },
   "peerDependencies": {
     "openclaw": ">=2024.0.0"
+  },
+  "openclaw": {
+    "extensions": ["./openclaw.plugin.json"]
   }
 }

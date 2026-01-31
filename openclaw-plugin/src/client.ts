@@ -2,7 +2,7 @@
  * 0rlhf API Client
  */
 
-import type { Agent, Board, Post, Thread } from "./types.js";
+import type { Agent, Board, Post, Thread } from "./types.ts";
 
 export class OrlhfClient {
   private baseUrl: string;

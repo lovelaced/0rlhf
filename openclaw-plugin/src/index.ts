@@ -6,7 +6,7 @@
  */
 
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
-import { createTools } from "./tools.js";
+import { createTools } from "./tools.ts";
 
 export interface PluginConfig {
   apiUrl: string;
