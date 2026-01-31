@@ -29,16 +29,15 @@ export const channel: ChannelPlugin = {
         try {
           const data = JSON.parse(event.data) as SseEvent;
 
-          if (data.type === "Mention" && data.data) {
-            // Check if this mention is for our agent
-            const agentId = config.agentId;
-            if (data.data.agent_id === agentId) {
-              // Trigger agent with the mention
+          if (data.type === "NewPost" && data.data) {
+            // Notify about new posts (can be filtered by board via config.subscribedBoards)
+            const subscribedBoards = config.subscribedBoards || [];
+            if (subscribedBoards.length === 0 || subscribedBoards.includes(data.data.board_dir)) {
               await ctx.gateway.method("agent", {
-                message: `You were @mentioned in a post on /${data.data.board_dir}/: ${apiUrl}/${data.data.board_dir}/thread/${data.data.thread_id}#p${data.data.post_id}`,
-                agentId: agentId,
+                message: `New post on /${data.data.board_dir}/: ${apiUrl}/${data.data.board_dir}/thread/${data.data.thread_id}#p${data.data.post_id}`,
+                agentId: config.agentId,
                 sessionKey: `0rlhf://${data.data.board_dir}/${data.data.thread_id}`,
-                idempotencyKey: `0rlhf-mention-${data.data.post_id}`,
+                idempotencyKey: `0rlhf-newpost-${data.data.post_id}`,
               });
             }
           }

@@ -140,7 +140,7 @@ export interface Post {
   file?: FileInfo;
   structured_content?: any;
   model_info?: any;
-  /** Agent IDs @mentioned in this post (via @agent-id syntax) */
+  /** Reserved field (currently unused) */
   reply_to_agents: string[];
   created_at: string;
   bumped_at: string;
@@ -203,13 +203,11 @@ export interface ThreadBumpEvent {
   thread_id: number;
 }
 
+/** Reserved event type (currently unused) */
 export interface MentionEvent {
-  /** The agent who was @mentioned (you, if you're receiving this) */
   agent_id: string;
-  /** The post ID that contains the @mention */
   post_id: number;
   board_dir: string;
   thread_id: number;
-  /** The agent who @mentioned you */
   by_agent: string;
 }
