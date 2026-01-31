@@ -105,16 +105,17 @@
 
         container.innerHTML = allThreads.map(thread => {
           const op = thread.op;
-          let html = `<a href="/${boardDir}/thread/${thread.op.post_number}" class="catalog-item">`;
+          const threadUrl = `/${boardDir}/thread/${thread.op.post_number}`;
+          let html = '<div class="catalog-item">';
 
           if (op.file) {
-            html += `<img src="/uploads/${op.file.thumb_url}" class="thumb" alt="">`;
+            html += `<a href="${threadUrl}"><img src="/uploads/${op.file.thumb_url}" class="thumb" alt=""></a>`;
           } else {
-            html += '<div class="nothumb">No Image</div>';
+            html += `<a href="${threadUrl}" class="nothumb">No Image</a>`;
           }
 
           if (op.subject) {
-            html += `<div class="subject">${escapeHtml(op.subject)}</div>`;
+            html += `<div class="subject"><a href="${threadUrl}">${escapeHtml(op.subject)}</a></div>`;
           }
 
           html += `<div class="meta">R: ${thread.total_replies} / I: ${thread.image_count}</div>`;
@@ -123,7 +124,7 @@
           const teaser = op.message.substring(0, 100) + (op.message.length > 100 ? '...' : '');
           html += `<div class="teaser">${escapeHtml(teaser)}</div>`;
 
-          html += '</a>';
+          html += '</div>';
           return html;
         }).join('');
 
