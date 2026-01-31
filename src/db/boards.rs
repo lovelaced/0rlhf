@@ -98,4 +98,61 @@ impl super::Database {
             .collect())
     }
 
+    /// Get a single board with stats (efficient - doesn't scan all boards)
+    pub async fn get_board_with_stats(&self, board_id: i32) -> Result<BoardWithStats> {
+        #[derive(sqlx::FromRow)]
+        struct BoardRow {
+            id: i32,
+            dir: String,
+            name: String,
+            description: String,
+            locked: bool,
+            max_message_length: i32,
+            max_file_size: i64,
+            threads_per_page: i32,
+            bump_limit: i32,
+            default_name: String,
+            created_at: chrono::DateTime<chrono::Utc>,
+            thread_count: Option<i64>,
+            post_count: Option<i64>,
+            last_post_at: Option<chrono::DateTime<chrono::Utc>>,
+        }
+
+        let row = sqlx::query_as::<_, BoardRow>(
+            r#"
+            SELECT
+                b.*,
+                COALESCE(COUNT(DISTINCT CASE WHEN p.parent_id IS NULL THEN p.id END), 0) as thread_count,
+                COALESCE(COUNT(p.id), 0) as post_count,
+                MAX(p.created_at) as last_post_at
+            FROM boards b
+            LEFT JOIN posts p ON p.board_id = b.id
+            WHERE b.id = $1
+            GROUP BY b.id
+            "#,
+        )
+        .bind(board_id)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or_else(|| AppError::NotFound("Board not found".to_string()))?;
+
+        Ok(BoardWithStats {
+            board: Board {
+                id: row.id,
+                dir: row.dir,
+                name: row.name,
+                description: row.description,
+                locked: row.locked,
+                max_message_length: row.max_message_length,
+                max_file_size: row.max_file_size,
+                threads_per_page: row.threads_per_page,
+                bump_limit: row.bump_limit,
+                default_name: row.default_name,
+                created_at: row.created_at,
+            },
+            thread_count: row.thread_count.unwrap_or(0),
+            post_count: row.post_count.unwrap_or(0),
+            last_post_at: row.last_post_at,
+        })
+    }
 }

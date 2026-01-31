@@ -159,22 +159,43 @@ pub async fn process_upload(
         hex::encode(hasher.finalize())
     };
 
-    // Decode and validate the image
-    let img = image::load_from_memory_with_format(data, format.to_image_format())
-        .map_err(|e| anyhow!("Failed to decode image: {}", e))?;
+    // CPU-intensive image processing in spawn_blocking to avoid blocking async runtime
+    let data_owned = data.to_vec();
+    let max_dimension = config.max_dimension;
+    let thumb_size = config.thumb_size;
+    let image_format = format.to_image_format();
 
-    let (width, height) = img.dimensions();
+    let (img, width, height, clean_data, thumb_width, thumb_height, thumb_data) =
+        tokio::task::spawn_blocking(move || -> Result<_> {
+            // Decode and validate the image
+            let img = image::load_from_memory_with_format(&data_owned, image_format)
+                .map_err(|e| anyhow!("Failed to decode image: {}", e))?;
 
-    // Check dimensions
-    if width > config.max_dimension || height > config.max_dimension {
-        return Err(anyhow!(
-            "Image too large: {}x{} (max: {}x{})",
-            width,
-            height,
-            config.max_dimension,
-            config.max_dimension
-        ));
-    }
+            let (width, height) = img.dimensions();
+
+            // Check dimensions
+            if width > max_dimension || height > max_dimension {
+                return Err(anyhow!(
+                    "Image too large: {}x{} (max: {}x{})",
+                    width,
+                    height,
+                    max_dimension,
+                    max_dimension
+                ));
+            }
+
+            // Re-encode image (strips EXIF and validates content)
+            let clean_data = reencode_image_sync(&img, image_format)?;
+
+            // Generate thumbnail
+            let thumb = generate_thumbnail(&img, thumb_size);
+            let (thumb_width, thumb_height) = thumb.dimensions();
+            let thumb_data = reencode_image_sync(&thumb, image_format)?;
+
+            Ok((img, width, height, clean_data, thumb_width, thumb_height, thumb_data))
+        })
+        .await
+        .map_err(|e| anyhow!("Image processing task failed: {}", e))??;
 
     // Generate unique filename
     let file_id = Uuid::new_v4();
@@ -188,19 +209,16 @@ pub async fn process_upload(
     fs::create_dir_all(&src_dir).await?;
     fs::create_dir_all(&thumb_dir).await?;
 
-    // Re-encode image (strips EXIF and validates content)
-    let clean_data = reencode_image(&img, format)?;
-
     // Save full-size image
     let file_path = src_dir.join(&file_name);
     fs::write(&file_path, &clean_data).await?;
 
-    // Generate and save thumbnail
-    let thumb = generate_thumbnail(&img, config.thumb_size);
-    let (thumb_width, thumb_height) = thumb.dimensions();
-    let thumb_data = reencode_image(&thumb, format)?;
+    // Save thumbnail
     let thumb_path = thumb_dir.join(&thumb_name);
     fs::write(&thumb_path, &thumb_data).await?;
+
+    // Suppress unused variable warning - img was used for dimensions
+    let _ = img;
 
     Ok(ProcessedImage {
         file_path: format!("src/{}", file_name),
@@ -216,26 +234,10 @@ pub async fn process_upload(
     })
 }
 
-/// Re-encode image to strip metadata and validate content
-fn reencode_image(img: &DynamicImage, format: AllowedFormat) -> Result<Vec<u8>> {
+/// Re-encode image to strip metadata and validate content (sync version for spawn_blocking)
+fn reencode_image_sync(img: &DynamicImage, format: ImageFormat) -> Result<Vec<u8>> {
     let mut buffer = Cursor::new(Vec::new());
-
-    match format {
-        AllowedFormat::Jpeg => {
-            img.write_to(&mut buffer, ImageFormat::Jpeg)?;
-        }
-        AllowedFormat::Png => {
-            img.write_to(&mut buffer, ImageFormat::Png)?;
-        }
-        AllowedFormat::Gif => {
-            // For GIF, just use first frame
-            img.write_to(&mut buffer, ImageFormat::Gif)?;
-        }
-        AllowedFormat::WebP => {
-            img.write_to(&mut buffer, ImageFormat::WebP)?;
-        }
-    }
-
+    img.write_to(&mut buffer, format)?;
     Ok(buffer.into_inner())
 }
 

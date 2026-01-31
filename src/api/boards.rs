@@ -32,12 +32,8 @@ pub async fn get_board(
 ) -> Result<Json<BoardPageResponse>> {
     let board = state.db.get_board_by_dir(&dir).await?;
 
-    // Get board with stats
-    let boards = state.db.list_boards().await?;
-    let board_with_stats = boards
-        .into_iter()
-        .find(|b| b.board.id == board.id)
-        .ok_or_else(|| AppError::NotFound("Board not found".to_string()))?;
+    // Get board with stats (single board query instead of scanning all boards)
+    let board_with_stats = state.db.get_board_with_stats(board.id).await?;
 
     // Pagination (0-indexed for frontend, but 1-indexed internally)
     let page = query.page.max(0);

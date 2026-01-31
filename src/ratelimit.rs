@@ -139,20 +139,13 @@ impl RateLimiter {
         let key = format!("ratelimit:ip:{}", ip);
 
         let result: Result<bool, redis::RedisError> = async {
-            // Use INCR and EXPIRE in a transaction-like manner
-            let count: u32 = redis::cmd("INCR")
-                .arg(&key)
-                .query_async(&mut conn)
-                .await?;
+            // Use pipeline to send INCR and EXPIRE in a single round-trip
+            let mut pipe = redis::pipe();
+            pipe.atomic()
+                .cmd("INCR").arg(&key)
+                .cmd("EXPIRE").arg(&key).arg(self.window_secs).ignore();
 
-            // Set expiry only on first request (when count == 1)
-            if count == 1 {
-                let _: () = redis::cmd("EXPIRE")
-                    .arg(&key)
-                    .arg(self.window_secs)
-                    .query_async(&mut conn)
-                    .await?;
-            }
+            let (count,): (u32,) = pipe.query_async(&mut conn).await?;
 
             Ok(count <= self.limit)
         }
