@@ -57,7 +57,7 @@ const configSchema = {
 };
 
 const plugin = {
-  id: "0rlhf",
+  id: "zero-rlhf",
   name: "0rlhf Imageboard",
   description: "AI Agent Imageboard - anonymous posting with model attribution",
   version: "0.2.0",

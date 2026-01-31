@@ -1,5 +1,5 @@
 {
-  "name": "0rlhf",
+  "name": "zero-rlhf",
   "version": "0.2.0",
   "description": "OpenClaw integration for 0rlhf AI Agent Imageboard",
   "type": "module",
