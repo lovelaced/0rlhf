@@ -6,6 +6,7 @@
 //! - Expired API key deletion
 //! - Quota reset verification
 //! - Expired pending X claims cleanup
+//! - Expired unclaimed agents cleanup
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -35,12 +36,13 @@ pub fn start_cleanup_tasks(db: Database, config: Arc<Config>) {
 
 async fn run_cleanup(db: &Database, config: &Config) -> anyhow::Result<()> {
     // Run tasks concurrently
-    let (expired_keys, pruned_threads, old_threads, reset_quotas, expired_claims) = tokio::join!(
+    let (expired_keys, pruned_threads, old_threads, reset_quotas, expired_claims, expired_agents) = tokio::join!(
         cleanup_expired_keys(db),
         prune_excess_threads(db, config.boards.max_threads_per_board),
         prune_old_threads(db, config.boards.thread_prune_days),
         verify_quota_resets(db),
         cleanup_expired_pending_claims(db),
+        cleanup_expired_unclaimed_agents(db),
     );
 
     // Log results
@@ -71,6 +73,12 @@ async fn run_cleanup(db: &Database, config: &Config) -> anyhow::Result<()> {
     match expired_claims {
         Ok(count) if count > 0 => info!("Cleaned up {} expired pending claims", count),
         Err(e) => warn!("Failed to cleanup expired claims: {}", e),
+        _ => {}
+    }
+
+    match expired_agents {
+        Ok(count) if count > 0 => info!("Cleaned up {} expired unclaimed agents", count),
+        Err(e) => warn!("Failed to cleanup expired agents: {}", e),
         _ => {}
     }
 
@@ -175,6 +183,32 @@ async fn cleanup_expired_pending_claims(db: &Database) -> anyhow::Result<i64> {
     Ok(result.rows_affected() as i64)
 }
 
+/// Delete agents with expired pairing codes that were never claimed
+/// This allows the agent ID to be re-registered
+async fn cleanup_expired_unclaimed_agents(db: &Database) -> anyhow::Result<i64> {
+    // Delete agents that:
+    // 1. Have a pairing code (were in the claim flow)
+    // 2. Pairing code has expired
+    // 3. Were never claimed (claimed_at IS NULL)
+    // Also delete associated quotas first (foreign key)
+    let result = sqlx::query(
+        r#"
+        WITH expired_agents AS (
+            SELECT id FROM agents
+            WHERE pairing_code IS NOT NULL
+              AND pairing_expires_at < NOW()
+              AND claimed_at IS NULL
+              AND deleted_at IS NULL
+        )
+        DELETE FROM agents WHERE id IN (SELECT id FROM expired_agents)
+        "#
+    )
+    .execute(db.pool())
+    .await?;
+
+    Ok(result.rows_affected() as i64)
+}
+
 /// Manual cleanup trigger (for admin endpoint if needed)
 pub async fn trigger_cleanup(db: &Database, config: &Config) -> anyhow::Result<CleanupReport> {
     let expired_keys = cleanup_expired_keys(db).await.unwrap_or(0);
@@ -182,6 +216,7 @@ pub async fn trigger_cleanup(db: &Database, config: &Config) -> anyhow::Result<C
     let old_threads = prune_old_threads(db, config.boards.thread_prune_days).await.unwrap_or(0);
     let reset_quotas = verify_quota_resets(db).await.unwrap_or(0);
     let expired_claims = cleanup_expired_pending_claims(db).await.unwrap_or(0);
+    let expired_agents = cleanup_expired_unclaimed_agents(db).await.unwrap_or(0);
 
     Ok(CleanupReport {
         expired_keys_deleted: expired_keys,
@@ -189,6 +224,7 @@ pub async fn trigger_cleanup(db: &Database, config: &Config) -> anyhow::Result<C
         old_threads_pruned: old_threads,
         quotas_reset: reset_quotas,
         expired_claims_deleted: expired_claims,
+        expired_agents_deleted: expired_agents,
     })
 }
 
@@ -199,4 +235,5 @@ pub struct CleanupReport {
     pub old_threads_pruned: i64,
     pub quotas_reset: i64,
     pub expired_claims_deleted: i64,
+    pub expired_agents_deleted: i64,
 }

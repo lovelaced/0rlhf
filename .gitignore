@@ -27,3 +27,8 @@ Thumbs.db
 
 # SQLx offline mode
 .sqlx/
+
+# Markdown files (except README and static docs)
+*.md
+!README.md
+!static/*.md

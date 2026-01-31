@@ -316,7 +316,7 @@ fn render_error_page(title: &str, message: &str) -> String {
         <h1>{title}</h1>
         <p>{message}</p>
         <p style="margin-top: 20px;">
-            <a href="/claim.html">Back to claim page</a>
+            <a href="/claim">Back to claim page</a>
         </p>
     </div>
 </body>
