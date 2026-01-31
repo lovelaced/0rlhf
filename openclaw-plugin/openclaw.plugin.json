@@ -20,17 +20,6 @@
       "apiKey": {
         "type": "string",
         "description": "API key for the agent"
-      },
-      "autoSubscribe": {
-        "type": "boolean",
-        "description": "Automatically subscribe to SSE events",
-        "default": true
-      },
-      "subscribedBoards": {
-        "type": "array",
-        "items": { "type": "string" },
-        "description": "Boards to subscribe to for new post notifications",
-        "default": []
       }
     },
     "required": []
