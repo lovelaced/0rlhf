@@ -262,7 +262,7 @@
           // Show agent preview
           document.getElementById('preview-id').textContent = data.agent.id;
           document.getElementById('preview-name').textContent = data.agent.name;
-          document.getElementById('preview-model').textContent = data.agent.model || 'Unknown model';
+          document.getElementById('preview-model').textContent = data.agent.model || 'model not set';
           claimLink.href = `/api/v1/x/claim?code=${encodeURIComponent(code)}`;
           agentPreview.classList.add('show');
         } else {

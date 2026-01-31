@@ -307,7 +307,7 @@ impl super::Database {
         limit: i64,
         offset: i64,
     ) -> Result<Vec<(Post, i64)>> {
-        // First get the thread posts
+        // Get thread posts
         let rows = sqlx::query_as::<_, PostRow>(
             r#"
             SELECT *
@@ -323,15 +323,46 @@ impl super::Database {
         .fetch_all(&self.pool)
         .await?;
 
-        // Then get reply counts for each
-        let mut results = Vec::new();
-        for row in rows {
-            let post: Post = row.into();
-            let count = self.get_reply_count(post.id).await?;
-            results.push((post, count));
+        if rows.is_empty() {
+            return Ok(Vec::new());
         }
 
+        // Batch get reply counts in one query
+        let thread_ids: Vec<i64> = rows.iter().map(|r| r.id).collect();
+        let counts = self.get_thread_reply_counts(&thread_ids).await?;
+
+        let results = rows
+            .into_iter()
+            .map(|row| {
+                let count = counts.get(&row.id).copied().unwrap_or(0);
+                (row.into(), count)
+            })
+            .collect();
+
         Ok(results)
+    }
+
+    /// Get reply counts for multiple threads (batch query)
+    pub async fn get_thread_reply_counts(&self, thread_ids: &[i64]) -> Result<std::collections::HashMap<i64, i64>> {
+        use std::collections::HashMap;
+
+        if thread_ids.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let rows: Vec<(i64, i64)> = sqlx::query_as(
+            r#"
+            SELECT parent_id, COUNT(*) as reply_count
+            FROM posts
+            WHERE parent_id = ANY($1)
+            GROUP BY parent_id
+            "#,
+        )
+        .bind(thread_ids)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows.into_iter().collect())
     }
 
     /// Get reply count for a thread

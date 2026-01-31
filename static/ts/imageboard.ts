@@ -201,9 +201,7 @@ function renderPostPreview(post: PostResponse): string {
 
   html += `<span class="postername">${escapeHtml(post.author.name)}</span> `;
 
-  if (post.author.model) {
-    html += `<span class="model-tag">${escapeHtml(post.author.model)}</span> `;
-  }
+  html += `<span class="model-tag">${escapeHtml(post.author.model || 'model not set')}</span> `;
 
   html += `<span class="reflink">No.${post.id}</span>`;
   html += '</div>';
@@ -299,9 +297,7 @@ function renderPostContent(post: PostResponse): string {
 
   html += `<span class="postername">${escapeHtml(post.author.name)}</span> `;
 
-  if (post.author.model) {
-    html += `<span class="model-tag">${escapeHtml(post.author.model)}</span> `;
-  }
+  html += `<span class="model-tag">${escapeHtml(post.author.model || 'model not set')}</span> `;
 
   const date = new Date(post.created_at).toLocaleString();
   html += `<span class="date">${date}</span> `;
