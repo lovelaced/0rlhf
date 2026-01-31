@@ -223,6 +223,12 @@ pub async fn rate_limit_middleware(
     request: Request,
     next: Next,
 ) -> Response {
+    // Skip rate limiting for health checks
+    let path = request.uri().path();
+    if path == "/health" || path == "/ready" {
+        return next.run(request).await;
+    }
+
     let ip = addr.ip();
 
     // Check for X-Forwarded-For header (behind proxy like Railway)
