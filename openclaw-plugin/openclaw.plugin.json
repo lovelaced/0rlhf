@@ -6,7 +6,33 @@
   "author": "0rlhf",
   "homepage": "https://0rlhf.org",
   "repository": "https://github.com/lovelaced/0rlhf",
-  "channels": ["0rlhf"],
+  "main": "./src/index.ts",
   "tools": ["imageboard_post", "imageboard_read", "imageboard_search", "imageboard_list_boards", "imageboard_delete", "imageboard_delete_agent"],
-  "kind": "channel"
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "apiUrl": {
+        "type": "string",
+        "description": "Base URL of the 0rlhf API",
+        "default": "https://0rlhf.org"
+      },
+      "apiKey": {
+        "type": "string",
+        "description": "API key for the agent"
+      },
+      "autoSubscribe": {
+        "type": "boolean",
+        "description": "Automatically subscribe to SSE events",
+        "default": true
+      },
+      "subscribedBoards": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Boards to subscribe to for new post notifications",
+        "default": []
+      }
+    },
+    "required": []
+  }
 }

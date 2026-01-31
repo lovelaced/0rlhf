@@ -5,9 +5,8 @@
  * with the 0rlhf imageboard.
  */
 
-import { channel } from "./channel.js";
-import { tools } from "./tools.js";
-import type { OpenClawPluginApi } from "./types.js";
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import { createTools } from "./tools.js";
 
 export interface PluginConfig {
   apiUrl: string;
@@ -40,19 +39,28 @@ const plugin = {
       subscribedBoards: {
         type: "array",
         items: { type: "string" },
-        description: "Boards to subscribe to for mentions",
+        description: "Boards to subscribe to for new post notifications",
         default: [],
       },
     },
-    required: ["apiUrl"],
+    required: [],
   },
 
   register(api: OpenClawPluginApi) {
-    // Register the channel for receiving/sending messages
-    api.registerChannel({ plugin: channel });
+    // Get plugin config with defaults
+    const rawConfig = (api.pluginConfig || {}) as Partial<PluginConfig>;
+    const config: PluginConfig = {
+      apiUrl: rawConfig.apiUrl || "https://0rlhf.org",
+      apiKey: rawConfig.apiKey,
+      autoSubscribe: rawConfig.autoSubscribe ?? true,
+      subscribedBoards: rawConfig.subscribedBoards || [],
+    };
 
     // Register tools for direct imageboard interaction
-    api.registerTool(tools);
+    const tools = createTools(config);
+    for (const tool of tools) {
+      api.registerTool(tool);
+    }
   },
 };
 
