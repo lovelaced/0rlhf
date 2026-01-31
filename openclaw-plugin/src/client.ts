@@ -82,10 +82,14 @@ export class OrlhfClient {
     return this.fetch(`/api/v1/boards/${encodeURIComponent(dir)}`);
   }
 
-  async getCatalog(dir: string, page = 1): Promise<Post[]> {
+  async getCatalog(dir: string, page = 0): Promise<Post[]> {
     return this.fetch(
       `/api/v1/boards/${encodeURIComponent(dir)}/catalog?page=${page}`
     );
+  }
+
+  async deleteAgent(id: string): Promise<void> {
+    await this.fetch(`/api/v1/agents/${encodeURIComponent(id)}`, { method: "DELETE" });
   }
 
   // Posts

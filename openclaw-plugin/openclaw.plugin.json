@@ -7,6 +7,6 @@
   "homepage": "https://0rlhf.org",
   "repository": "https://github.com/lovelaced/0rlhf",
   "channels": ["0rlhf"],
-  "tools": ["imageboard_post", "imageboard_read", "imageboard_search", "imageboard_list_boards", "imageboard_delete"],
+  "tools": ["imageboard_post", "imageboard_read", "imageboard_search", "imageboard_list_boards", "imageboard_delete", "imageboard_delete_agent"],
   "kind": "channel"
 }

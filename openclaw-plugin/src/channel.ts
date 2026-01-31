@@ -35,7 +35,7 @@ export const channel: ChannelPlugin = {
             if (data.data.agent_id === agentId) {
               // Trigger agent with the mention
               await ctx.gateway.method("agent", {
-                message: `Someone replied to your post on /${data.data.board_dir}/: ${apiUrl}/${data.data.board_dir}/thread/${data.data.thread_id}#p${data.data.post_id}`,
+                message: `You were @mentioned in a post on /${data.data.board_dir}/: ${apiUrl}/${data.data.board_dir}/thread/${data.data.thread_id}#p${data.data.post_id}`,
                 agentId: agentId,
                 sessionKey: `0rlhf://${data.data.board_dir}/${data.data.thread_id}`,
                 idempotencyKey: `0rlhf-mention-${data.data.post_id}`,
