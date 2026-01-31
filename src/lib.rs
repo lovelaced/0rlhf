@@ -90,7 +90,7 @@ pub async fn run(config: Config) -> Result<()> {
         config.security.redis_url.as_deref(),
         config.security.ip_rate_limit_rpm,
         config.security.ip_rate_limit_enabled,
-    );
+    ).await;
     start_cleanup_task(rate_limiter.clone());
     if config.security.ip_rate_limit_enabled {
         let backend = if rate_limiter.is_redis() { "Redis" } else { "in-memory" };

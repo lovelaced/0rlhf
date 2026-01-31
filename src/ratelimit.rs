@@ -40,7 +40,7 @@ enum RateLimiterInner {
     },
     /// Redis-backed rate limiting (distributed)
     Redis {
-        client: redis::Client,
+        conn: redis::aio::MultiplexedConnection,
     },
 }
 
@@ -58,10 +58,11 @@ impl RateLimiter {
     }
 
     /// Create a new Redis-backed rate limiter
-    pub fn new_redis(redis_url: &str, requests_per_minute: u32, enabled: bool) -> Result<Self, redis::RedisError> {
+    pub async fn new_redis(redis_url: &str, requests_per_minute: u32, enabled: bool) -> Result<Self, redis::RedisError> {
         let client = redis::Client::open(redis_url)?;
+        let conn = client.get_multiplexed_async_connection().await?;
         Ok(Self {
-            inner: RateLimiterInner::Redis { client },
+            inner: RateLimiterInner::Redis { conn },
             limit: requests_per_minute,
             window_secs: 60,
             enabled,
@@ -70,48 +71,25 @@ impl RateLimiter {
 
     /// Create rate limiter from configuration
     /// Uses Redis if REDIS_URL is configured, otherwise falls back to in-memory
-    pub fn from_config(
+    pub async fn from_config(
         redis_url: Option<&str>,
         requests_per_minute: u32,
         enabled: bool,
     ) -> Self {
         if let Some(url) = redis_url {
-            match Self::new_redis(url, requests_per_minute, enabled) {
-                Ok(limiter) => {
-                    // Test the connection synchronously with a timeout
-                    let client = match &limiter.inner {
-                        RateLimiterInner::Redis { client } => client.clone(),
-                        _ => unreachable!(),
-                    };
-
-                    let test_result = std::thread::spawn(move || {
-                        let rt = tokio::runtime::Runtime::new().unwrap();
-                        rt.block_on(async {
-                            tokio::time::timeout(
-                                Duration::from_secs(5),
-                                client.get_multiplexed_async_connection()
-                            ).await
-                        })
-                    }).join();
-
-                    match test_result {
-                        Ok(Ok(Ok(_))) => {
-                            tracing::info!("Using Redis-backed rate limiting");
-                            return limiter;
-                        }
-                        Ok(Ok(Err(e))) => {
-                            tracing::warn!("Redis connection failed: {}. Falling back to in-memory.", e);
-                        }
-                        Ok(Err(_)) => {
-                            tracing::warn!("Redis connection timed out. Falling back to in-memory.");
-                        }
-                        Err(_) => {
-                            tracing::warn!("Redis connection test panicked. Falling back to in-memory.");
-                        }
-                    }
+            match tokio::time::timeout(
+                Duration::from_secs(5),
+                Self::new_redis(url, requests_per_minute, enabled)
+            ).await {
+                Ok(Ok(limiter)) => {
+                    tracing::info!("Using Redis-backed rate limiting");
+                    return limiter;
                 }
-                Err(e) => {
-                    tracing::warn!("Failed to parse Redis URL: {}. Falling back to in-memory.", e);
+                Ok(Err(e)) => {
+                    tracing::warn!("Redis connection failed: {}. Falling back to in-memory.", e);
+                }
+                Err(_) => {
+                    tracing::warn!("Redis connection timed out. Falling back to in-memory.");
                 }
             }
         }
@@ -129,8 +107,8 @@ impl RateLimiter {
             RateLimiterInner::Memory { requests } => {
                 self.check_and_record_memory(requests, ip).await
             }
-            RateLimiterInner::Redis { client } => {
-                self.check_and_record_redis(client, ip).await
+            RateLimiterInner::Redis { conn } => {
+                self.check_and_record_redis(conn.clone(), ip).await
             }
         }
     }
@@ -157,12 +135,10 @@ impl RateLimiter {
         true
     }
 
-    async fn check_and_record_redis(&self, client: &redis::Client, ip: IpAddr) -> bool {
+    async fn check_and_record_redis(&self, mut conn: redis::aio::MultiplexedConnection, ip: IpAddr) -> bool {
         let key = format!("ratelimit:ip:{}", ip);
 
         let result: Result<bool, redis::RedisError> = async {
-            let mut conn = client.get_multiplexed_async_connection().await?;
-
             // Use INCR and EXPIRE in a transaction-like manner
             let count: u32 = redis::cmd("INCR")
                 .arg(&key)
@@ -218,10 +194,10 @@ impl RateLimiter {
                     .map(|ts| ts.iter().filter(|&&t| t > cutoff).count())
                     .unwrap_or(0)
             }
-            RateLimiterInner::Redis { client } => {
+            RateLimiterInner::Redis { conn } => {
                 let key = format!("ratelimit:ip:{}", ip);
+                let mut conn = conn.clone();
                 let result: Result<usize, redis::RedisError> = async {
-                    let mut conn = client.get_multiplexed_async_connection().await?;
                     let count: Option<usize> = redis::cmd("GET")
                         .arg(&key)
                         .query_async(&mut conn)
