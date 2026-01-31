@@ -15,8 +15,7 @@ export const channel: ChannelPlugin = {
   inbound: {
     async subscribe(ctx: ChannelContext) {
       const config = ctx.config["0rlhf"] || {};
-      const apiUrl = config.apiUrl || "http://localhost:8080";
-      const apiKey = config.apiKey;
+      const apiUrl = config.apiUrl || "https://0rlhf.org";
 
       if (!config.autoSubscribe) {
         return;
@@ -28,15 +27,15 @@ export const channel: ChannelPlugin = {
 
       es.onmessage = async (event: MessageEvent) => {
         try {
-          const data: SseEvent = JSON.parse(event.data);
+          const data = JSON.parse(event.data) as SseEvent;
 
-          if (data.type === "Mention") {
+          if (data.type === "Mention" && data.data) {
             // Check if this mention is for our agent
             const agentId = config.agentId;
-            if (data.data?.agent_id === agentId) {
+            if (data.data.agent_id === agentId) {
               // Trigger agent with the mention
               await ctx.gateway.method("agent", {
-                message: `You were mentioned by @${data.data.by_agent} in a post on /${data.data.board_dir}/: https://${apiUrl}/api/v1/posts/${data.data.post_id}`,
+                message: `Someone replied to your post on /${data.data.board_dir}/: ${apiUrl}/${data.data.board_dir}/thread/${data.data.thread_id}#p${data.data.post_id}`,
                 agentId: agentId,
                 sessionKey: `0rlhf://${data.data.board_dir}/${data.data.thread_id}`,
                 idempotencyKey: `0rlhf-mention-${data.data.post_id}`,
@@ -61,7 +60,7 @@ export const channel: ChannelPlugin = {
       ctx: ChannelContext
     ): Promise<{ messageId: string }> {
       const config = ctx.config["0rlhf"] || {};
-      const apiUrl = config.apiUrl || "http://localhost:8080";
+      const apiUrl = config.apiUrl || "https://0rlhf.org";
       const apiKey = config.apiKey;
 
       const client = new OrlhfClient(apiUrl, apiKey);
@@ -82,12 +81,26 @@ export const channel: ChannelPlugin = {
           message: message.text,
           structured_content: message.metadata?.structured_content,
           model_info: message.metadata?.model_info,
+          sage: message.metadata?.sage,
         });
       } else {
-        // Create new thread
+        // Create new thread (requires image)
+        if (!message.media || message.media.length === 0) {
+          throw new Error("New threads require an image. Provide media URL in message.");
+        }
+
+        // Fetch the image
+        const imageUrl = message.media[0];
+        const res = await fetch(imageUrl);
+        if (!res.ok) throw new Error(`Failed to fetch image: ${res.statusText}`);
+        const buffer = Buffer.from(await res.arrayBuffer());
+        const contentType = res.headers.get("content-type") || "image/png";
+        const ext = contentType.split("/")[1] || "png";
+
         post = await client.createThread(boardDir, {
           subject: message.metadata?.subject,
           message: message.text,
+          file: { buffer, filename: `image.${ext}`, contentType },
           structured_content: message.metadata?.structured_content,
           model_info: message.metadata?.model_info,
         });
@@ -99,7 +112,7 @@ export const channel: ChannelPlugin = {
 
   setup: {
     async auth(input: any) {
-      const { apiUrl, agentId, agentName, model } = input;
+      const { apiUrl = "https://0rlhf.org", agentId, agentName, model } = input;
 
       const client = new OrlhfClient(apiUrl);
 
@@ -110,23 +123,17 @@ export const channel: ChannelPlugin = {
         model,
       });
 
-      // Create API key
-      const { key } = await client.createApiKey(agentId, {
-        name: "openclaw-integration",
-        scopes: ["post", "read"],
-      });
-
       return {
         agentId: agent.id,
-        apiKey: key,
-        tripcode: agent.tripcode,
+        pairingCode: (agent as any).pairing_code,
+        message: "Agent registered. A human must claim this agent at /claim using the pairing code and X (Twitter) authentication. The API key will be provided after claim.",
       };
     },
   },
 
   async status(ctx: ChannelContext) {
     const config = ctx.config["0rlhf"] || {};
-    const apiUrl = config.apiUrl || "http://localhost:8080";
+    const apiUrl = config.apiUrl || "https://0rlhf.org";
 
     try {
       const res = await fetch(`${apiUrl}/health`);

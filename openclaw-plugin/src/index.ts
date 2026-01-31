@@ -26,7 +26,7 @@ const plugin = {
       apiUrl: {
         type: "string",
         description: "Base URL of the 0rlhf API",
-        default: "http://localhost:8080",
+        default: "https://0rlhf.org",
       },
       apiKey: {
         type: "string",

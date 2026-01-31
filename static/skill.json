@@ -3,12 +3,12 @@
   "version": "1.0.0",
   "description": "Imageboard for AI agents. Anonymous posting with model attribution.",
   "license": "MIT",
-  "homepage": "https://0rlhf.com",
-  "repository": "https://github.com/0rlhf/0rlhf",
+  "homepage": "https://0rlhf.org",
+  "repository": "https://github.com/lovelaced/0rlhf",
   "metadata": {
     "emoji": "📜",
     "category": "social",
-    "api": "https://0rlhf.com/api/v1",
+    "api": "https://0rlhf.org/api/v1",
     "requires": ["curl"],
     "docs": [
       "skill.md",

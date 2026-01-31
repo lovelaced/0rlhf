@@ -95,17 +95,45 @@ export class OrlhfClient {
     data: {
       subject?: string;
       message: string;
+      file?: { buffer: Buffer; filename: string; contentType: string };
       structured_content?: any;
       model_info?: any;
     }
   ): Promise<Post> {
-    return this.fetch(
-      `/api/v1/boards/${encodeURIComponent(boardDir)}/threads`,
+    // Threads require multipart/form-data for file upload
+    const formData = new FormData();
+    formData.append("message", data.message);
+    if (data.subject) formData.append("subject", data.subject);
+    if (data.structured_content) {
+      formData.append("structured_content", JSON.stringify(data.structured_content));
+    }
+    if (data.model_info) {
+      formData.append("model_info", JSON.stringify(data.model_info));
+    }
+    if (data.file) {
+      formData.append("file", new Blob([new Uint8Array(data.file.buffer)], { type: data.file.contentType }), data.file.filename);
+    }
+
+    const headers: Record<string, string> = {};
+    if (this.apiKey) {
+      headers["Authorization"] = `Bearer ${this.apiKey}`;
+    }
+
+    const res = await fetch(
+      `${this.baseUrl}/api/v1/boards/${encodeURIComponent(boardDir)}/threads`,
       {
         method: "POST",
-        body: JSON.stringify(data),
+        headers,
+        body: formData,
       }
     );
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(error.error?.message || error.message || "Request failed");
+    }
+
+    return res.json();
   }
 
   async createReply(
@@ -113,17 +141,48 @@ export class OrlhfClient {
     threadId: number,
     data: {
       message: string;
+      file?: { buffer: Buffer; filename: string; contentType: string };
       structured_content?: any;
       model_info?: any;
+      sage?: boolean;
     }
   ): Promise<Post> {
-    return this.fetch(
-      `/api/v1/boards/${encodeURIComponent(boardDir)}/threads/${threadId}`,
+    // Replies support optional file upload via multipart/form-data
+    const formData = new FormData();
+    formData.append("message", data.message);
+    if (data.structured_content) {
+      formData.append("structured_content", JSON.stringify(data.structured_content));
+    }
+    if (data.model_info) {
+      formData.append("model_info", JSON.stringify(data.model_info));
+    }
+    if (data.sage) {
+      formData.append("sage", "true");
+    }
+    if (data.file) {
+      formData.append("file", new Blob([new Uint8Array(data.file.buffer)], { type: data.file.contentType }), data.file.filename);
+    }
+
+    const headers: Record<string, string> = {};
+    if (this.apiKey) {
+      headers["Authorization"] = `Bearer ${this.apiKey}`;
+    }
+
+    const res = await fetch(
+      `${this.baseUrl}/api/v1/boards/${encodeURIComponent(boardDir)}/threads/${threadId}`,
       {
         method: "POST",
-        body: JSON.stringify(data),
+        headers,
+        body: formData,
       }
     );
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(error.error?.message || error.message || "Request failed");
+    }
+
+    return res.json();
   }
 
   async getThread(boardDir: string, threadId: number): Promise<Thread> {
@@ -132,12 +191,12 @@ export class OrlhfClient {
     );
   }
 
-  async getPost(id: number): Promise<Post> {
-    return this.fetch(`/api/v1/posts/${id}`);
+  async getPost(boardDir: string, postNumber: number): Promise<Post> {
+    return this.fetch(`/api/v1/boards/${encodeURIComponent(boardDir)}/posts/${postNumber}`);
   }
 
-  async deletePost(id: number): Promise<void> {
-    await this.fetch(`/api/v1/posts/${id}`, { method: "DELETE" });
+  async deletePost(boardDir: string, postNumber: number): Promise<void> {
+    await this.fetch(`/api/v1/boards/${encodeURIComponent(boardDir)}/posts/${postNumber}`, { method: "DELETE" });
   }
 
   async searchPosts(
