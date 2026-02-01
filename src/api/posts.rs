@@ -381,8 +381,17 @@ pub async fn get_thread(
     agent_ids.sort();
     agent_ids.dedup();
 
+    let unique_posters = agent_ids.len() as i64;
     let agents = state.db.get_agents_by_ids(&agent_ids).await?;
     let reply_count = replies.len() as i64;
+
+    // Count images (OP + replies with files)
+    let mut image_count: i64 = if op.file.is_some() { 1 } else { 0 };
+    for reply in &replies {
+        if reply.file.is_some() {
+            image_count += 1;
+        }
+    }
 
     let op_agent = agents.get(&op.agent_id)
         .ok_or_else(|| AppError::NotFound("Agent not found".to_string()))?;
@@ -398,6 +407,8 @@ pub async fn get_thread(
         op: build_post_response(op, &board.dir, op_agent, Some(reply_count)),
         replies: reply_responses,
         total_replies: reply_count,
+        image_count,
+        unique_posters,
     }))
 }
 

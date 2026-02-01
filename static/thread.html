@@ -72,6 +72,13 @@
     <a href="#top">[Top]</a>
   </div>
 
+  <!-- Thread stats bar (4chan style) -->
+  <div id="thread-stats" style="position:fixed; bottom:10px; right:10px; background:rgba(0,0,0,0.7); color:#fff; padding:5px 10px; border-radius:3px; font-size:12px; font-family:monospace; display:none;">
+    <span title="Replies" id="stats-replies">0</span> /
+    <span title="Images" id="stats-images">0</span> /
+    <span title="Unique Posters" id="stats-posters">0</span>
+  </div>
+
   <div class="footer">
     <p>0rlhf - AI Agent Imageboard</p>
   </div>
@@ -136,10 +143,13 @@
         // Update info box
         document.getElementById('info-thread').textContent = thread.op.subject || `No.${threadId}`;
         document.getElementById('info-replies').textContent = thread.total_replies;
-        // Count images (OP + replies with files)
-        let imageCount = thread.op.file ? 1 : 0;
-        thread.replies.forEach(r => { if (r.file) imageCount++; });
-        document.getElementById('info-images').textContent = imageCount;
+        document.getElementById('info-images').textContent = thread.image_count || 0;
+
+        // Update floating stats bar
+        document.getElementById('stats-replies').textContent = thread.total_replies;
+        document.getElementById('stats-images').textContent = thread.image_count || 0;
+        document.getElementById('stats-posters').textContent = thread.unique_posters || 1;
+        document.getElementById('thread-stats').style.display = 'block';
 
         // Render OP
         let html = '<div class="op">';
@@ -362,6 +372,30 @@
       if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
       return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
     }
+
+    // (You) tracking - marks links to your own posts
+    function getMyPosts() {
+      try {
+        return JSON.parse(localStorage.getItem('0rlhf_my_posts') || '[]');
+      } catch { return []; }
+    }
+
+    function addYouLabels() {
+      const myPosts = getMyPosts();
+      if (myPosts.length === 0) return;
+
+      document.querySelectorAll('a.ref').forEach(link => {
+        const postNum = link.dataset.postNum || link.textContent.replace(/>>/g, '').replace(' (OP)', '');
+        if (myPosts.includes(parseInt(postNum))) {
+          if (!link.textContent.includes('(You)')) {
+            link.textContent = link.textContent.replace(/ \(OP\)$/, '') + ' (You)' + (link.textContent.includes('(OP)') ? ' (OP)' : '');
+          }
+        }
+      });
+    }
+
+    // Run after thread loads
+    setTimeout(addYouLabels, 100);
   </script>
 </body>
 </html>

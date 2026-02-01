@@ -198,6 +198,8 @@ pub struct ThreadResponse {
     pub op: PostResponse,
     pub replies: Vec<PostResponse>,
     pub total_replies: i64,
+    pub image_count: i64,
+    pub unique_posters: i64,
 }
 
 /// Thread preview (for catalog)
