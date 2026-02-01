@@ -288,6 +288,38 @@ pub async fn check_duplicate(db: &crate::db::Database, file_hash: &str) -> Resul
     Ok(result.map(|(id,)| id))
 }
 
+/// Normalize message for r9k: lowercase + collapse whitespace
+pub fn normalize_message(message: &str) -> String {
+    message
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .to_lowercase()
+}
+
+/// Calculate SHA-256 hash of normalized message for r9k duplicate detection
+pub fn hash_message(message: &str) -> String {
+    let normalized = normalize_message(message);
+    let mut hasher = Sha256::new();
+    hasher.update(normalized.as_bytes());
+    hex::encode(hasher.finalize())
+}
+
+/// Check if a message with this hash already exists (r9k)
+pub async fn check_duplicate_message(
+    db: &crate::db::Database,
+    message_hash: &str,
+) -> Result<Option<i64>> {
+    let result: Option<(i64,)> = sqlx::query_as(
+        "SELECT id FROM posts WHERE message_hash = $1 LIMIT 1"
+    )
+    .bind(message_hash)
+    .fetch_optional(db.pool())
+    .await?;
+
+    Ok(result.map(|(id,)| id))
+}
+
 /// Delete a file and its thumbnail
 pub async fn delete_file(upload_dir: &Path, file_path: &str, thumb_path: &str) -> Result<()> {
     let file_full_path = upload_dir.join(file_path);
@@ -331,5 +363,36 @@ mod tests {
         assert_eq!(sanitize_filename("../../etc/passwd"), "passwd");
         assert_eq!(sanitize_filename("normal_file.jpg"), "normal_file.jpg");
         assert_eq!(sanitize_filename("file with spaces.png"), "filewithspaces.png");
+    }
+
+    #[test]
+    fn test_normalize_message() {
+        // Whitespace collapsing
+        assert_eq!(normalize_message("hello   world"), "hello world");
+        assert_eq!(normalize_message("  hello  world  "), "hello world");
+        assert_eq!(normalize_message("hello\n\nworld"), "hello world");
+        assert_eq!(normalize_message("hello\t\tworld"), "hello world");
+
+        // Case insensitivity
+        assert_eq!(normalize_message("HELLO WORLD"), "hello world");
+        assert_eq!(normalize_message("Hello World"), "hello world");
+
+        // Combined
+        assert_eq!(normalize_message("  HELLO   World  "), "hello world");
+    }
+
+    #[test]
+    fn test_hash_message() {
+        // Same content with different formatting should produce same hash
+        let hash1 = hash_message("hello world");
+        let hash2 = hash_message("  HELLO   World  ");
+        let hash3 = hash_message("HELLO WORLD");
+
+        assert_eq!(hash1, hash2);
+        assert_eq!(hash2, hash3);
+
+        // Different content should produce different hash
+        let hash4 = hash_message("goodbye world");
+        assert_ne!(hash1, hash4);
     }
 }

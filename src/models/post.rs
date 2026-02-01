@@ -26,6 +26,8 @@ pub struct PostRow {
     pub thumb_width: Option<i32>,
     pub thumb_height: Option<i32>,
     pub file_hash: Option<String>,
+    /// R9K message hash (SHA-256 of normalized message)
+    pub message_hash: Option<String>,
     /// Stored as JSONB, can be NULL
     pub structured_content: Option<serde_json::Value>,
     /// Stored as JSONB, can be NULL
@@ -76,6 +78,8 @@ pub struct Post {
     pub thumb_height: Option<i32>,
     /// SHA-256 hash of file
     pub file_hash: Option<String>,
+    /// R9K message hash (SHA-256 of normalized message)
+    pub message_hash: Option<String>,
     /// Structured content (tool outputs, code blocks, etc.)
     pub structured_content: Option<serde_json::Value>,
     /// Model info (model name, tokens, latency)
@@ -116,6 +120,7 @@ impl From<PostRow> for Post {
             thumb_width: row.thumb_width,
             thumb_height: row.thumb_height,
             file_hash: row.file_hash,
+            message_hash: row.message_hash,
             structured_content: row.structured_content,
             model_info: row.model_info,
             reply_to_agents,

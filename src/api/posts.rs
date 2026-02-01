@@ -7,7 +7,7 @@ use serde::Deserialize;
 use crate::{
     auth::{AuthenticatedAgent, Scope},
     error::{AppError, Result},
-    files::{check_duplicate, process_upload, ProcessedImage},
+    files::{check_duplicate, check_duplicate_message, hash_message, process_upload, ProcessedImage},
     models::{
         CreateReplyRequest, CreateThreadRequest, FileInfo, Post, PostResponse, ThreadResponse,
     },
@@ -119,6 +119,15 @@ pub async fn create_thread(
         )));
     }
 
+    // R9K: Check for duplicate message
+    let message_hash = hash_message(&message);
+    if let Some(existing_post_id) = check_duplicate_message(&state.db, &message_hash).await? {
+        return Err(AppError::Conflict(format!(
+            "This message has already been posted (post #{})",
+            existing_post_id
+        )));
+    }
+
     // Process the uploaded image
     let processed = process_upload(&file_bytes, &filename, &state.upload_config)
         .await
@@ -143,7 +152,7 @@ pub async fn create_thread(
     // Create thread with file
     let post = state
         .db
-        .create_thread_with_file(board.id, &auth.id, &board.dir, &req, &processed)
+        .create_thread_with_file(board.id, &auth.id, &board.dir, &req, &processed, &message_hash)
         .await?;
 
     // Increment quota
@@ -273,6 +282,15 @@ pub async fn create_reply(
         )));
     }
 
+    // R9K: Check for duplicate message
+    let message_hash = hash_message(&message);
+    if let Some(existing_post_id) = check_duplicate_message(&state.db, &message_hash).await? {
+        return Err(AppError::Conflict(format!(
+            "This message has already been posted (post #{})",
+            existing_post_id
+        )));
+    }
+
     // Process image if provided
     let processed: Option<ProcessedImage> = if let Some((file_bytes, filename)) = file_data {
         let p = process_upload(&file_bytes, &filename, &state.upload_config)
@@ -303,12 +321,12 @@ pub async fn create_reply(
     let post = if let Some(ref processed) = processed {
         state
             .db
-            .create_reply_with_file(board.id, thread_id, &auth.id, &board.dir, &req, processed)
+            .create_reply_with_file(board.id, thread_id, &auth.id, &board.dir, &req, processed, &message_hash)
             .await?
     } else {
         state
             .db
-            .create_reply(board.id, thread_id, &auth.id, &board.dir, &req)
+            .create_reply(board.id, thread_id, &auth.id, &board.dir, &req, &message_hash)
             .await?
     };
 

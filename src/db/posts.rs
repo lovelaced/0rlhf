@@ -10,6 +10,7 @@ impl super::Database {
         agent_id: &str,
         board_dir: &str,
         req: &CreateThreadRequest,
+        message_hash: &str,
     ) -> Result<Post> {
         let message_html = render_message(&req.message, board_dir);
         let mentions = extract_mentions(&req.message);
@@ -18,10 +19,10 @@ impl super::Database {
             r#"
             INSERT INTO posts (
                 board_id, parent_id, agent_id, subject, message, message_html,
-                structured_content, model_info, reply_to_agents,
+                structured_content, model_info, reply_to_agents, message_hash,
                 created_at, bumped_at
             )
-            VALUES ($1, NULL, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+            VALUES ($1, NULL, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
             RETURNING *
             "#,
         )
@@ -33,6 +34,7 @@ impl super::Database {
         .bind(&req.structured_content)
         .bind(&req.model_info)
         .bind(serde_json::to_value(&mentions).unwrap())
+        .bind(message_hash)
         .fetch_one(&self.pool)
         .await?;
 
@@ -47,6 +49,7 @@ impl super::Database {
         board_dir: &str,
         req: &CreateThreadRequest,
         file: &ProcessedImage,
+        message_hash: &str,
     ) -> Result<Post> {
         let message_html = render_message(&req.message, board_dir);
         let mentions = extract_mentions(&req.message);
@@ -57,10 +60,10 @@ impl super::Database {
                 board_id, parent_id, agent_id, subject, message, message_html,
                 file, file_original, file_mime, file_size, file_width, file_height,
                 thumb, thumb_width, thumb_height, file_hash,
-                structured_content, model_info, reply_to_agents,
+                structured_content, model_info, reply_to_agents, message_hash,
                 created_at, bumped_at
             )
-            VALUES ($1, NULL, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW(), NOW())
+            VALUES ($1, NULL, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW(), NOW())
             RETURNING *
             "#,
         )
@@ -82,6 +85,7 @@ impl super::Database {
         .bind(&req.structured_content)
         .bind(&req.model_info)
         .bind(serde_json::to_value(&mentions).unwrap())
+        .bind(message_hash)
         .fetch_one(&self.pool)
         .await?;
 
@@ -97,6 +101,7 @@ impl super::Database {
         agent_id: &str,
         board_dir: &str,
         req: &CreateReplyRequest,
+        message_hash: &str,
     ) -> Result<Post> {
         // Check thread exists and is not locked (outside transaction for quick rejection)
         let thread = self.get_post(thread_id).await?;
@@ -117,10 +122,10 @@ impl super::Database {
             r#"
             INSERT INTO posts (
                 board_id, parent_id, agent_id, message, message_html,
-                structured_content, model_info, reply_to_agents,
+                structured_content, model_info, reply_to_agents, message_hash,
                 created_at, bumped_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
             RETURNING *
             "#,
         )
@@ -132,6 +137,7 @@ impl super::Database {
         .bind(&req.structured_content)
         .bind(&req.model_info)
         .bind(serde_json::to_value(&mentions).unwrap())
+        .bind(message_hash)
         .fetch_one(&mut *tx)
         .await?;
 
@@ -168,6 +174,7 @@ impl super::Database {
         board_dir: &str,
         req: &CreateReplyRequest,
         file: &ProcessedImage,
+        message_hash: &str,
     ) -> Result<Post> {
         // Check thread exists and is not locked (outside transaction for quick rejection)
         let thread = self.get_post(thread_id).await?;
@@ -190,10 +197,10 @@ impl super::Database {
                 board_id, parent_id, agent_id, message, message_html,
                 file, file_original, file_mime, file_size, file_width, file_height,
                 thumb, thumb_width, thumb_height, file_hash,
-                structured_content, model_info, reply_to_agents,
+                structured_content, model_info, reply_to_agents, message_hash,
                 created_at, bumped_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, NOW(), NOW())
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW(), NOW())
             RETURNING *
             "#,
         )
@@ -215,6 +222,7 @@ impl super::Database {
         .bind(&req.structured_content)
         .bind(&req.model_info)
         .bind(serde_json::to_value(&mentions).unwrap())
+        .bind(message_hash)
         .fetch_one(&mut *tx)
         .await?;
 
