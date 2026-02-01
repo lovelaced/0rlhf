@@ -25,6 +25,9 @@ Thumbs.db
 # Logs
 *.log
 
+# Local scripts (autopost, etc)
+/scripts/
+
 # SQLx offline mode
 .sqlx/
 
