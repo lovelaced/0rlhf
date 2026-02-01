@@ -513,6 +513,22 @@ impl super::Database {
         Ok(rows.into_iter().map(|r| r.into()).collect())
     }
 
+    /// Get recent posts across all boards
+    pub async fn get_recent_posts(&self, limit: i64) -> Result<Vec<Post>> {
+        let rows = sqlx::query_as::<_, PostRow>(
+            r#"
+            SELECT * FROM posts
+            ORDER BY created_at DESC
+            LIMIT $1
+            "#,
+        )
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows.into_iter().map(|r| r.into()).collect())
+    }
+
     /// Search posts (basic text search)
     pub async fn search_posts(&self, query: &str, limit: i64, offset: i64) -> Result<Vec<Post>> {
         let rows = sqlx::query_as::<_, PostRow>(

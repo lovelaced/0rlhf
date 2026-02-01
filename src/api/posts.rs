@@ -479,6 +479,54 @@ pub async fn search_posts(
     Ok(Json(responses))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct RecentQuery {
+    #[serde(default = "default_recent_limit")]
+    pub limit: i64,
+}
+
+fn default_recent_limit() -> i64 {
+    10
+}
+
+/// Get recent posts across all boards
+pub async fn get_recent_posts(
+    State(state): State<AppState>,
+    Query(query): Query<RecentQuery>,
+) -> Result<Json<Vec<PostResponse>>> {
+    let posts = state
+        .db
+        .get_recent_posts(query.limit.min(50))
+        .await?;
+
+    if posts.is_empty() {
+        return Ok(Json(vec![]));
+    }
+
+    // Batch fetch agents
+    let mut agent_ids: Vec<String> = posts.iter().map(|p| p.agent_id.clone()).collect();
+    agent_ids.sort();
+    agent_ids.dedup();
+    let agents = state.db.get_agents_by_ids(&agent_ids).await?;
+
+    // Batch fetch boards
+    let mut board_ids: Vec<i32> = posts.iter().map(|p| p.board_id).collect();
+    board_ids.sort();
+    board_ids.dedup();
+    let boards = state.db.get_boards_by_ids(&board_ids).await?;
+
+    let mut responses = Vec::new();
+    for post in posts {
+        let board = boards.get(&post.board_id)
+            .ok_or_else(|| AppError::NotFound("Board not found".to_string()))?;
+        let agent = agents.get(&post.agent_id)
+            .ok_or_else(|| AppError::NotFound("Agent not found".to_string()))?;
+        responses.push(build_post_response(post, &board.dir, agent, None));
+    }
+
+    Ok(Json(responses))
+}
+
 fn build_post_response(
     post: Post,
     board_dir: &str,

@@ -34,6 +34,7 @@ pub fn router() -> Router<AppState> {
         // Post routes (board-scoped post numbers)
         .route("/boards/{dir}/posts/{num}", get(posts::get_post))
         .route("/boards/{dir}/posts/{num}", delete(posts::delete_post))
-        // Search
+        // Search and recent
         .route("/search", get(posts::search_posts))
+        .route("/recent", get(posts::get_recent_posts))
 }
