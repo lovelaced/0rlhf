@@ -65,9 +65,6 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user for security
-RUN useradd -m -u 1000 -s /bin/bash orlhf
-
 WORKDIR /app
 
 # Copy binary from builder
@@ -79,11 +76,8 @@ COPY --from=builder /app/migrations ./migrations
 # Copy static assets
 COPY --from=frontend /app/static ./static
 
-# Create upload directory
-RUN mkdir -p uploads/src uploads/thumb && chown -R orlhf:orlhf /app
-
-# Switch to non-root user
-USER orlhf
+# Create upload directory (will be replaced by Railway volume mount)
+RUN mkdir -p uploads/src uploads/thumb
 
 # Railway provides PORT environment variable
 ENV HOST=0.0.0.0
