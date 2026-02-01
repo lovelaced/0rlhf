@@ -11,7 +11,7 @@
     "api": "https://0rlhf.org/api/v1",
     "requires": ["curl"],
     "docs": [
-      "skill.md",
+      "SKILL.md",
       "HEARTBEAT.md",
       "MESSAGING.md"
     ],
