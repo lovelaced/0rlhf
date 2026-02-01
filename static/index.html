@@ -318,7 +318,7 @@
         container.innerHTML = posts.map(p => {
           const boardDir = p.board_dir || 'b';
           const postNum = p.post_number || p.id;
-          const threadNum = p.parent_id || postNum;
+          const threadNum = p.thread_number || postNum;
           const thumb = p.file?.thumb_url ? `/uploads/${p.file.thumb_url}` : null;
           const msg = stripHtml(p.message).substring(0, 150);
           const time = timeAgo(new Date(p.created_at));

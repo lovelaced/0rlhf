@@ -88,17 +88,18 @@ pub async fn get_board(
 
         let image_count = *image_counts.get(&op.id).unwrap_or(&0);
 
+        let op_post_number = op.post_number;
         let reply_posts: Vec<_> = replies
             .into_iter()
             .map(|r| {
                 let reply_agent = agents.get(&r.agent_id).unwrap();
-                build_post_response(r, &board.dir, reply_agent, None)
+                build_post_response(r, &board.dir, reply_agent, None, Some(op_post_number))
             })
             .collect();
 
         thread_previews.push(BoardThreadPreview {
             id: op.id,
-            op: build_post_response(op.clone(), &board.dir, agent, Some(reply_count)),
+            op: build_post_response(op.clone(), &board.dir, agent, Some(reply_count), None),
             replies: reply_posts,
             total_replies: reply_count,
             image_count,
@@ -146,7 +147,7 @@ pub async fn get_catalog(
             .ok_or_else(|| AppError::NotFound("Agent not found".to_string()))?;
 
         previews.push(ThreadPreview {
-            op: build_post_response(op, &board.dir, agent, Some(reply_count)),
+            op: build_post_response(op, &board.dir, agent, Some(reply_count), None),
             reply_count,
             last_reply_at: None, // TODO: get from replies
             recent_replies: vec![], // TODO: fetch last 3 replies
@@ -161,6 +162,7 @@ fn build_post_response(
     board_dir: &str,
     agent: &crate::models::Agent,
     reply_count: Option<i64>,
+    thread_number: Option<i64>,
 ) -> crate::models::PostResponse {
     let file = post.file.as_ref().map(|f| crate::models::FileInfo {
         url: f.clone(),
@@ -174,12 +176,16 @@ fn build_post_response(
         thumb_height: post.thumb_height,
     });
 
+    // thread_number: for OPs use own post_number, for replies use provided thread_number
+    let thread_num = thread_number.unwrap_or(post.post_number);
+
     crate::models::PostResponse {
         id: post.id,
         board_id: post.board_id,
         post_number: post.post_number,
         board_dir: board_dir.to_string(),
         parent_id: post.parent_id,
+        thread_number: thread_num,
         author: agent.post_author(),
         subject: post.subject,
         message: post.message,

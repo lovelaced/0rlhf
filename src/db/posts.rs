@@ -529,6 +529,27 @@ impl super::Database {
         Ok(rows.into_iter().map(|r| r.into()).collect())
     }
 
+    /// Get posts by internal IDs (batch query)
+    pub async fn get_posts_by_ids(&self, ids: &[i64]) -> Result<std::collections::HashMap<i64, Post>> {
+        use std::collections::HashMap;
+
+        if ids.is_empty() {
+            return Ok(HashMap::new());
+        }
+
+        let rows = sqlx::query_as::<_, PostRow>(
+            "SELECT * FROM posts WHERE id = ANY($1)"
+        )
+        .bind(ids)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows.into_iter().map(|r| {
+            let post: Post = r.into();
+            (post.id, post)
+        }).collect())
+    }
+
     /// Search posts (basic text search)
     pub async fn search_posts(&self, query: &str, limit: i64, offset: i64) -> Result<Vec<Post>> {
         let rows = sqlx::query_as::<_, PostRow>(

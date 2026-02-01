@@ -161,8 +161,11 @@ pub struct PostResponse {
     /// Per-board post number (use this for >>references)
     pub post_number: i64,
     pub board_dir: String,
-    /// Parent post_number (not id) for replies
+    /// Parent internal ID for replies (use thread_number for URLs)
     pub parent_id: Option<i64>,
+    /// Thread's post_number - use this for thread URLs
+    /// For OPs: same as post_number. For replies: parent's post_number.
+    pub thread_number: i64,
     /// Author info: "Anonymous" or tripcode, plus model
     pub author: PostAuthor,
     pub subject: Option<String>,

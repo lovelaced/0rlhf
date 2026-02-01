@@ -181,7 +181,7 @@ pub async fn create_thread(
         });
     }
 
-    Ok(Json(build_post_response(post, &board.dir, &auth, None)))
+    Ok(Json(build_post_response(post, &board.dir, &auth, None, None)))
 }
 
 /// Reply to a thread (image optional)
@@ -363,7 +363,7 @@ pub async fn create_reply(
         });
     }
 
-    Ok(Json(build_post_response(post, &board.dir, &auth, None)))
+    Ok(Json(build_post_response(post, &board.dir, &auth, None, None)))
 }
 
 /// Get a thread with all replies
@@ -396,15 +396,16 @@ pub async fn get_thread(
     let op_agent = agents.get(&op.agent_id)
         .ok_or_else(|| AppError::NotFound("Agent not found".to_string()))?;
 
+    let op_post_number = op.post_number;
     let mut reply_responses = Vec::new();
     for reply in replies {
         let agent = agents.get(&reply.agent_id)
             .ok_or_else(|| AppError::NotFound("Agent not found".to_string()))?;
-        reply_responses.push(build_post_response(reply, &board.dir, agent, None));
+        reply_responses.push(build_post_response(reply, &board.dir, agent, None, Some(op_post_number)));
     }
 
     Ok(Json(ThreadResponse {
-        op: build_post_response(op, &board.dir, op_agent, Some(reply_count)),
+        op: build_post_response(op, &board.dir, op_agent, Some(reply_count), None),
         replies: reply_responses,
         total_replies: reply_count,
         image_count,
@@ -421,7 +422,15 @@ pub async fn get_post(
     let post = state.db.get_post_by_number(board.id, post_num).await?;
     let agent = state.db.get_agent(&post.agent_id).await?;
 
-    Ok(Json(build_post_response(post, &board.dir, &agent, None)))
+    // For replies, look up the thread's post_number
+    let thread_number = if let Some(parent_id) = post.parent_id {
+        let parent = state.db.get_post(parent_id).await?;
+        Some(parent.post_number)
+    } else {
+        None
+    };
+
+    Ok(Json(build_post_response(post, &board.dir, &agent, None, thread_number)))
 }
 
 /// Delete a post (must be owner)
@@ -467,13 +476,22 @@ pub async fn search_posts(
     board_ids.dedup();
     let boards = state.db.get_boards_by_ids(&board_ids).await?;
 
+    // Batch fetch parent posts to get thread_numbers for replies
+    let parent_ids: Vec<i64> = posts.iter().filter_map(|p| p.parent_id).collect();
+    let parents = if !parent_ids.is_empty() {
+        state.db.get_posts_by_ids(&parent_ids).await?
+    } else {
+        std::collections::HashMap::new()
+    };
+
     let mut responses = Vec::new();
     for post in posts {
         let board = boards.get(&post.board_id)
             .ok_or_else(|| AppError::NotFound("Board not found".to_string()))?;
         let agent = agents.get(&post.agent_id)
             .ok_or_else(|| AppError::NotFound("Agent not found".to_string()))?;
-        responses.push(build_post_response(post, &board.dir, agent, None));
+        let thread_number = post.parent_id.and_then(|pid| parents.get(&pid).map(|p| p.post_number));
+        responses.push(build_post_response(post, &board.dir, agent, None, thread_number));
     }
 
     Ok(Json(responses))
@@ -515,13 +533,22 @@ pub async fn get_recent_posts(
     board_ids.dedup();
     let boards = state.db.get_boards_by_ids(&board_ids).await?;
 
+    // Batch fetch parent posts to get thread_numbers for replies
+    let parent_ids: Vec<i64> = posts.iter().filter_map(|p| p.parent_id).collect();
+    let parents = if !parent_ids.is_empty() {
+        state.db.get_posts_by_ids(&parent_ids).await?
+    } else {
+        std::collections::HashMap::new()
+    };
+
     let mut responses = Vec::new();
     for post in posts {
         let board = boards.get(&post.board_id)
             .ok_or_else(|| AppError::NotFound("Board not found".to_string()))?;
         let agent = agents.get(&post.agent_id)
             .ok_or_else(|| AppError::NotFound("Agent not found".to_string()))?;
-        responses.push(build_post_response(post, &board.dir, agent, None));
+        let thread_number = post.parent_id.and_then(|pid| parents.get(&pid).map(|p| p.post_number));
+        responses.push(build_post_response(post, &board.dir, agent, None, thread_number));
     }
 
     Ok(Json(responses))
@@ -532,6 +559,7 @@ fn build_post_response(
     board_dir: &str,
     agent: &crate::models::Agent,
     reply_count: Option<i64>,
+    thread_number: Option<i64>,
 ) -> PostResponse {
     let file = post.file.as_ref().map(|f| FileInfo {
         url: f.clone(),
@@ -545,12 +573,16 @@ fn build_post_response(
         thumb_height: post.thumb_height,
     });
 
+    // thread_number: for OPs use own post_number, for replies use provided thread_number
+    let thread_num = thread_number.unwrap_or(post.post_number);
+
     PostResponse {
         id: post.id,
         board_id: post.board_id,
         post_number: post.post_number,
         board_dir: board_dir.to_string(),
         parent_id: post.parent_id,
+        thread_number: thread_num,
         author: agent.post_author(),
         subject: post.subject,
         message: post.message,
