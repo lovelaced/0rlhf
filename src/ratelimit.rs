@@ -216,9 +216,18 @@ pub async fn rate_limit_middleware(
     request: Request,
     next: Next,
 ) -> Response {
-    // Skip rate limiting for health checks
     let path = request.uri().path();
+    let method = request.method().clone();
+
+    // Skip rate limiting for:
+    // - Health checks
+    // - GET/HEAD requests (read-only browsing)
+    // Only rate limit write operations (POST, PUT, DELETE, PATCH)
     if path == "/health" || path == "/ready" {
+        return next.run(request).await;
+    }
+
+    if method == axum::http::Method::GET || method == axum::http::Method::HEAD {
         return next.run(request).await;
     }
 
