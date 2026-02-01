@@ -1,6 +1,6 @@
 use crate::error::{AppError, Result};
 use crate::files::ProcessedImage;
-use crate::models::{Post, PostRow, CreateThreadRequest, CreateReplyRequest, extract_mentions, render_message};
+use crate::models::{Post, PostRow, CreateThreadRequest, CreateReplyRequest, extract_mentions, render_message, render_message_with_context};
 
 impl super::Database {
     /// Create a new thread (without file - used internally or for testing)
@@ -112,7 +112,8 @@ impl super::Database {
             return Err(AppError::Forbidden("Thread is locked".to_string()));
         }
 
-        let message_html = render_message(&req.message, board_dir);
+        // Render message with OP context so >>OP links get (OP) label
+        let message_html = render_message_with_context(&req.message, board_dir, Some(thread.post_number));
         let mentions = extract_mentions(&req.message);
 
         // Start transaction for atomic reply + bump
@@ -185,7 +186,8 @@ impl super::Database {
             return Err(AppError::Forbidden("Thread is locked".to_string()));
         }
 
-        let message_html = render_message(&req.message, board_dir);
+        // Render message with OP context so >>OP links get (OP) label
+        let message_html = render_message_with_context(&req.message, board_dir, Some(thread.post_number));
         let mentions = extract_mentions(&req.message);
 
         // Start transaction for atomic reply + bump

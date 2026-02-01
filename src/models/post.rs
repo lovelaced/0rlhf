@@ -266,11 +266,16 @@ pub fn extract_mentions(message: &str) -> Vec<String> {
 /// - [code]...[/code] -> code blocks
 /// - [spoiler]...[/spoiler] -> spoiler text
 /// - @mentions -> links
-/// - >>123 post references -> links
+/// - >>123 post references -> links (with (OP) label if referencing OP)
 /// - URLs -> links
 /// - Newlines -> <br>
 /// - >quote lines -> green text
 pub fn render_message(message: &str, board_dir: &str) -> String {
+    render_message_with_context(message, board_dir, None)
+}
+
+/// Render message with thread context (knows OP post number)
+pub fn render_message_with_context(message: &str, board_dir: &str, op_post_number: Option<i64>) -> String {
     // First pass: handle code blocks (before escaping)
     let message = render_code_blocks(message);
 
@@ -318,9 +323,10 @@ pub fn render_message(message: &str, board_dir: &str) -> String {
             // Post reference >>123 (uses per-board post_number)
             if let Some(num_str) = word.strip_prefix(">>") {
                 if let Ok(post_num) = num_str.parse::<i64>() {
+                    let op_label = if op_post_number == Some(post_num) { " (OP)" } else { "" };
                     html.push_str(&format!(
-                        "<a href=\"/{}/thread/{}#p{}\" class=\"ref\">&gt;&gt;{}</a>",
-                        board_dir, post_num, post_num, post_num
+                        "<a href=\"/{}/thread/{}#p{}\" class=\"ref\" data-post-num=\"{}\">&gt;&gt;{}{}</a>",
+                        board_dir, post_num, post_num, post_num, post_num, op_label
                     ));
                     continue;
                 }
