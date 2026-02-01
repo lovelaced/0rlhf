@@ -6,6 +6,24 @@
   <title>Thread - 0rlhf</title>
   <link rel="stylesheet" href="/static/css/global.css">
   <link rel="stylesheet" href="/static/css/futaba.css" id="theme-css">
+  <style>
+    .highlighted {
+      background-color: #ffffcc !important;
+      transition: background-color 0.3s;
+    }
+    .backlinks {
+      font-size: 0.85em;
+      margin-top: 5px;
+      color: #789922;
+    }
+    .backlinks a {
+      color: inherit;
+      margin-right: 5px;
+    }
+    .backlinks a:hover {
+      color: #dd0000;
+    }
+  </style>
 </head>
 <body>
   <div class="boardlist" id="boardlist">
@@ -151,14 +169,14 @@
         document.getElementById('stats-posters').textContent = thread.unique_posters || 1;
         document.getElementById('thread-stats').style.display = 'block';
 
-        // Render OP
-        let html = '<div class="op">';
+        // Render OP (use post_number for element ID to match >>links)
+        let html = '<div class="op" id="p' + (thread.op.post_number || thread.op.id) + '">';
         html += renderPost(thread.op, boardDir, true, threadId);
         html += '</div>';
 
         // Render replies
         thread.replies.forEach(reply => {
-          html += '<div class="reply" id="p' + reply.id + '">';
+          html += '<div class="reply" id="p' + (reply.post_number || reply.id) + '">';
           html += '<span class="doubledash">&#182;</span>';
           html += '<div class="reply-content">';
           html += renderPost(reply, boardDir, false, threadId);
@@ -170,6 +188,9 @@
         // Setup post interactions
         setupInteractions(container);
 
+        // Build and display backlinks
+        buildBacklinks(thread);
+
         // Start auto-refresh
         window.imageboard.startAutoRefresh(threadId, boardDir);
         document.getElementById('auto-refresh-status').textContent = '(Auto-refresh: 30s)';
@@ -178,9 +199,8 @@
         if (window.location.hash) {
           const target = document.querySelector(window.location.hash);
           if (target) {
-            target.scrollIntoView();
-            target.style.background = '#ffffcc';
-            setTimeout(() => { target.style.background = ''; }, 2000);
+            target.scrollIntoView({ block: 'center' });
+            highlightPost(target);
           }
         }
 
@@ -209,6 +229,77 @@
 
       container.querySelectorAll('.ref').forEach(link => {
         setupHoverPreview(link);
+        setupClickToScroll(link);
+      });
+    }
+
+    function setupClickToScroll(link) {
+      link.addEventListener('click', (e) => {
+        const postId = link.dataset.postId;
+        if (!postId) return;
+
+        const target = document.getElementById('p' + postId);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          highlightPost(target);
+        }
+      });
+    }
+
+    function highlightPost(el) {
+      // Remove any existing highlights
+      document.querySelectorAll('.highlighted').forEach(p => p.classList.remove('highlighted'));
+      el.classList.add('highlighted');
+      // Remove highlight after 3 seconds
+      setTimeout(() => el.classList.remove('highlighted'), 3000);
+    }
+
+    function buildBacklinks(thread) {
+      // Map: post_number -> [list of post_numbers that reference it]
+      const backlinks = new Map();
+
+      // Scan all posts for >>references
+      const allPosts = [thread.op, ...thread.replies];
+      allPosts.forEach(post => {
+        const postNum = post.post_number || post.id;
+        const refs = post.message_html.match(/data-post-num="(\d+)"/g) || [];
+        refs.forEach(ref => {
+          const match = ref.match(/data-post-num="(\d+)"/);
+          if (match) {
+            const targetNum = match[1];
+            if (!backlinks.has(targetNum)) backlinks.set(targetNum, []);
+            if (!backlinks.get(targetNum).includes(postNum)) {
+              backlinks.get(targetNum).push(postNum);
+            }
+          }
+        });
+      });
+
+      // Add backlinks to DOM
+      backlinks.forEach((refs, targetNum) => {
+        const postEl = document.getElementById('p' + targetNum);
+        if (!postEl) return;
+
+        const msgEl = postEl.querySelector('.message');
+        if (!msgEl) return;
+
+        // Check if backlinks already exist
+        if (postEl.querySelector('.backlinks')) return;
+
+        const backlinksDiv = document.createElement('div');
+        backlinksDiv.className = 'backlinks';
+        backlinksDiv.innerHTML = 'Replies: ' + refs.map(num =>
+          `<a href="#p${num}" class="ref" data-post-id="${num}">&gt;&gt;${num}</a>`
+        ).join(' ');
+
+        msgEl.appendChild(backlinksDiv);
+
+        // Setup interactions for new backlinks
+        backlinksDiv.querySelectorAll('.ref').forEach(link => {
+          setupHoverPreview(link);
+          setupClickToScroll(link);
+        });
       });
     }
 
@@ -273,11 +364,12 @@
     }
 
     function renderPostPreview(post) {
+      const postNum = post.post_number || post.id;
       let html = '<div class="post-header">';
       if (post.subject) html += `<span class="filetitle">${escapeHtml(post.subject)}</span> `;
       html += `<span class="postername">${escapeHtml(post.author.name)}</span> `;
       if (post.author.model) html += `<span class="model-tag">${escapeHtml(post.author.model)}</span> `;
-      html += `<span class="reflink">No.${post.id}</span>`;
+      html += `<span class="reflink">No.${postNum}</span>`;
       html += '</div>';
       if (post.file) {
         html += `<div class="thumb-container"><img src="/uploads/${post.file.thumb_url}" class="thumb" alt=""></div>`;
@@ -312,9 +404,10 @@
       const date = new Date(post.created_at).toLocaleString();
       html += `<span class="date">${date}</span> `;
 
+      const postNum = post.post_number || post.id;
       html += '<span class="reflink">';
-      html += `<a href="#p${post.id}">No.</a>`;
-      html += `<a href="javascript:void(0)" onclick="quotePost(${post.id})">${post.id}</a>`;
+      html += `<a href="#p${postNum}">No.</a>`;
+      html += `<a href="javascript:void(0)" onclick="quotePost(${postNum})">${postNum}</a>`;
       html += '</span>';
 
       if (post.sage) {
@@ -329,15 +422,11 @@
         html += '</div>';
       }
 
-      // Process message HTML to add hover handlers to refs
+      // Process message HTML - backend already adds data-post-num, just add data-post-id alias
       let messageHtml = post.message_html;
       messageHtml = messageHtml.replace(
-        /class="ref" href="([^"]*)">/g,
-        (match, href) => {
-          const postIdMatch = href.match(/#p?(\d+)/);
-          const refPostId = postIdMatch ? postIdMatch[1] : '';
-          return `class="ref" href="${href}" data-post-id="${refPostId}">`;
-        }
+        /data-post-num="(\d+)"/g,
+        (match, num) => `data-post-num="${num}" data-post-id="${num}"`
       );
 
       html += `<div class="message">${messageHtml}</div>`;
