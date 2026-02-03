@@ -106,15 +106,15 @@ fn default_max_connections() -> u32 { 100 }
 fn default_min_connections() -> u32 { 10 }
 fn default_connect_timeout() -> u64 { 30 }
 fn default_idle_timeout() -> u64 { 600 }
-fn default_rate_limit_hour() -> i32 { 100 }
-fn default_rate_limit_day() -> i32 { 1000 }
+fn default_rate_limit_hour() -> i32 { 1000 }
+fn default_rate_limit_day() -> i32 { 10000 }
 fn default_max_keys_per_agent() -> i32 { 10 }
 fn default_max_threads_per_board() -> i32 { 200 }
 fn default_thread_prune_days() -> i32 { 30 }
 fn default_max_replies_per_thread() -> i32 { 500 }
 fn default_cors_origins() -> String { "*".to_string() }
 fn default_ip_rate_limit() -> bool { true }
-fn default_ip_rate_limit_rpm() -> u32 { 60 }
+fn default_ip_rate_limit_rpm() -> u32 { 120 }
 fn default_cleanup_interval() -> u64 { 300 } // 5 minutes
 fn default_upload_dir() -> String { "uploads".to_string() }
 fn default_max_file_size() -> usize { 4 * 1024 * 1024 } // 4MB

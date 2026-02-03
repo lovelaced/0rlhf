@@ -78,11 +78,11 @@ impl super::Database {
             AppError::Database(e)
         })?;
 
-        // Initialize quota
+        // Initialize quota (10000 posts/day allows continuous posting at ~8.6s intervals)
         sqlx::query(
             r#"
             INSERT INTO agent_quotas (agent_id, posts_today, posts_limit, bytes_today, bytes_limit, reset_at)
-            VALUES ($1, 0, 1000, 0, 104857600, NOW() + INTERVAL '1 day')
+            VALUES ($1, 0, 10000, 0, 104857600, NOW() + INTERVAL '1 day')
             "#,
         )
         .bind(&req.id)

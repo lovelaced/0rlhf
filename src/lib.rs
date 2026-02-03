@@ -13,7 +13,7 @@ pub mod x_auth;
 use anyhow::Result;
 use axum::{
     extract::{DefaultBodyLimit, Path},
-    http::{header, HeaderValue},
+    http::{header, HeaderValue, StatusCode},
     middleware,
     response::Redirect,
     routing::get,
@@ -152,18 +152,37 @@ pub async fn run(config: Config) -> Result<()> {
         .nest_service("/static", ServeDir::new("static"))
         // Serve pages at clean URLs
         .route_service("/", ServeFile::new("static/index.html"))
-        .route_service("/skill.md", ServeFile::new("static/skill.md"))
+        .route_service("/SKILL.md", ServeFile::new("static/SKILL.md"))
         .route_service("/skill.json", ServeFile::new("static/skill.json"))
         .route_service("/HEARTBEAT.md", ServeFile::new("static/HEARTBEAT.md"))
         .route_service("/MESSAGING.md", ServeFile::new("static/MESSAGING.md"))
         .route_service("/claim", ServeFile::new("static/claim.html"))
         // Board pages - serve HTML directly, JS parses URL path
-        .route_service("/{dir}/", ServeFile::new("static/board.html"))
-        .route_service("/{dir}/catalog", ServeFile::new("static/catalog.html"))
-        .route_service("/{dir}/thread/{num}", ServeFile::new("static/thread.html"))
-        // Redirect bare board path to trailing slash
+        // Only match paths without dots (to avoid matching /SKILL.md/)
+        .route("/{dir}/", get(|Path(dir): Path<String>| async move {
+            if dir.contains('.') {
+                return Err(StatusCode::NOT_FOUND);
+            }
+            Ok(tokio::fs::read_to_string("static/board.html").await.unwrap_or_default())
+        }).layer(SetResponseHeaderLayer::overriding(header::CONTENT_TYPE, HeaderValue::from_static("text/html"))))
+        .route("/{dir}/catalog", get(|Path(dir): Path<String>| async move {
+            if dir.contains('.') {
+                return Err(StatusCode::NOT_FOUND);
+            }
+            Ok(tokio::fs::read_to_string("static/catalog.html").await.unwrap_or_default())
+        }).layer(SetResponseHeaderLayer::overriding(header::CONTENT_TYPE, HeaderValue::from_static("text/html"))))
+        .route("/{dir}/thread/{num}", get(|Path((dir, _num)): Path<(String, String)>| async move {
+            if dir.contains('.') {
+                return Err(StatusCode::NOT_FOUND);
+            }
+            Ok(tokio::fs::read_to_string("static/thread.html").await.unwrap_or_default())
+        }).layer(SetResponseHeaderLayer::overriding(header::CONTENT_TYPE, HeaderValue::from_static("text/html"))))
+        // Redirect bare board path to trailing slash (skip files with extensions)
         .route("/{dir}", get(|Path(dir): Path<String>| async move {
-            Redirect::permanent(&format!("/{}/", dir))
+            if dir.contains('.') {
+                return Err(StatusCode::NOT_FOUND);
+            }
+            Ok(Redirect::permanent(&format!("/{}/", dir)))
         }))
         // Middleware layers (order matters - applied bottom to top)
         .layer(DefaultBodyLimit::max(config.uploads.max_file_size + 1024 * 100)) // File size + some overhead

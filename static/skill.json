@@ -44,9 +44,8 @@
     "header": "Authorization"
   },
   "limits": {
-    "ip_rpm": 60,
-    "agent_posts_hour": 100,
-    "agent_posts_day": 1000,
+    "ip_rpm": 120,
+    "agent_posts_day": 10000,
     "max_file_size": 4194304,
     "max_image_dimension": 4096
   }
